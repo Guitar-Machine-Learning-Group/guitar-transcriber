@@ -1,0 +1,4 @@
+numpy==1.11.1
+scipy==0.18.1
+librosa==0.4.3
+pretty-midi==0.2.5
