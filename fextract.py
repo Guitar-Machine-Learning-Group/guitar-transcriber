@@ -9,6 +9,11 @@ from scipy import signal
 from dataset import SongData, Dataset
 from midiio import MidiIO
 
+try:
+    xrange
+except NameError:
+    xrange = range
+
 class FeatureExtractor(object):
     """
     For each audio file, extract features for each window and 
