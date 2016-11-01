@@ -47,6 +47,7 @@ class FeatureExtractor(object):
         self.dataset = Dataset()
         for audio_file in audio_files:
             fname = os.path.splitext(os.path.split(audio_file)[-1])[0]
+            print(fname)
             mid_file = os.path.join(label_path, '%s.mid' % fname)
             if not os.path.isfile(mid_file):
                 mid_file = None

@@ -35,8 +35,8 @@ class GuitarTranscriber(object):
             pass
 
 if __name__ == "__main__":
-    audio_path = '/media/gburlet/Beartracks/Frettable/data/guitar/acoustic_synthesized_ground_truth/audio_small'
-    label_path = '/media/gburlet/Beartracks/Frettable/data/guitar/acoustic_synthesized_ground_truth/midi_small'
+    audio_path = '../acoustic_synthesized_ground_truth/audio_small'
+    label_path = '../acoustic_synthesized_ground_truth/midi_small'
     window_size = 2048
     hop_size = 1024
     sampling_rate = 22050
