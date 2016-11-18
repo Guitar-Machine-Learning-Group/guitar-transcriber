@@ -35,10 +35,10 @@ class GuitarTranscriber(object):
             pass
 
 if __name__ == "__main__":
-    audio_path = '../acoustic_synthesized_ground_truth/audio_small'
-    label_path = '../acoustic_synthesized_ground_truth/midi_small'
+    audio_path = './audio'
+    label_path = './midi'
     window_size = 2048
-    hop_size = 1024
+    hop_size = 2048
     sampling_rate = 22050
 
     gt = GuitarTranscriber(audio_path, label_path, window_size, hop_size, sampling_rate)

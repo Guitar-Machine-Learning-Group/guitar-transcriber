@@ -8,6 +8,7 @@ from scipy import signal
 
 from dataset import SongData, Dataset
 from midiio import MidiIO
+import matplotlib.pyplot as plt
 
 try:
     xrange
@@ -92,6 +93,21 @@ class FeatureExtractor(object):
             self._speak('\rextracting features: %d%%' % int((i+1)/num_songs * 100))
 
         self._speak('\n')
+        print len(s.X)
+        print len(s.X[0])
+        # for i in range(len(s.X[0])):
+        #     window0 = s.X[:, i]
+        # #for window0 in s.X:
+        # #window0 = s.X[0]
+        #     sp = np.fft.fft(window0)
+        #     freq = np.fft.fftfreq(len(window0))
+        #     print len(freq)
+        #     print freq
+        #     print len(sp.real)
+        #     print sp.real
+        #     plt.plot(freq, sp.real, freq, sp.imag)
+        #     plt.show()
+
 
     def _extract_labels(self):
         """
@@ -126,13 +142,16 @@ class FeatureExtractor(object):
 
                 # populate pitch indicators in label matrix
                 # label matrix is [num_wins x num_pitches] where num_pitches is number of pitches capable of being produced by the instrument
-                # rows are binary vectors, where a 1 indicates the presence of MIDI number
+                # rwows are binary vectors, where a 1 indicates the presence of MIDI number
                 pitch_indicators = np.unique(nmat[nidx,0]).astype(np.uint32) - self.pitch_offset
                 s.Y[iwin, pitch_indicators] = 1.0
 
             self._speak('\rextracting labels: %d%%' % int((i+1)/num_songs * 100))
 
         self._speak('\n')
+        print s.Y
+        print len(s.Y)
+        print len(s.Y[0])
 
     def _speak(self, msg):
         """
