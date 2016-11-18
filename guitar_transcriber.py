@@ -38,7 +38,7 @@ if __name__ == "__main__":
     audio_path = './audio'
     label_path = './midi'
     window_size = 2048
-    hop_size = 2048
+    hop_size = 1024
     sampling_rate = 22050
 
     gt = GuitarTranscriber(audio_path, label_path, window_size, hop_size, sampling_rate)

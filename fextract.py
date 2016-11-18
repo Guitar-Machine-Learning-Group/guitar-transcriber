@@ -95,18 +95,47 @@ class FeatureExtractor(object):
         self._speak('\n')
         print len(s.X)
         print len(s.X[0])
-        # for i in range(len(s.X[0])):
-        #     window0 = s.X[:, i]
-        # #for window0 in s.X:
-        # #window0 = s.X[0]
-        #     sp = np.fft.fft(window0)
-        #     freq = np.fft.fftfreq(len(window0))
-        #     print len(freq)
-        #     print freq
-        #     print len(sp.real)
-        #     print sp.real
-        #     plt.plot(freq, sp.real, freq, sp.imag)
-        #     plt.show()
+
+        x = np.arange(0, self.window_size, 1)
+        for i in range(len(s.X[0])):
+            window = s.X[:, i]
+
+            y = window #s.x[0:self.window_size]
+
+            fig = plt.figure(1,figsize=(14,7))
+            fig.canvas.set_window_title('Window '+str(i))
+
+            plt.subplot(211)
+            plt.xlabel('time')
+            plt.ylabel('amptitude?')
+            plt.title('raw input waveform')
+            plt.axis([0, self.window_size, -1, 1])
+            plt.plot(x,y)
+            #plt.show()
+
+            # perform fft
+            sp = np.fft.fft(window)
+            freq = np.fft.fftfreq(len(window))
+
+            print len(freq)
+            print freq
+            print len(sp.real)
+            print sp.real
+
+            plt.subplot(212)
+            plt.xlabel('frequency')
+            plt.ylabel('?')
+            plt.title('FFT result')
+            plt.plot(freq, sp.real, freq, sp.imag)
+
+
+            plt.tight_layout()
+            plt.show()
+            
+
+        
+            
+
 
 
     def _extract_labels(self):
