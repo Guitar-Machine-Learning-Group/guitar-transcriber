@@ -10,6 +10,11 @@ from dataset import SongData, Dataset
 from midiio import MidiIO
 import matplotlib.pyplot as plt
 
+try:
+    xrange
+except NameError:
+    xrange = range
+
 class FeatureExtractor(object):
     """
     For each audio file, extract features for each window and 
@@ -48,6 +53,7 @@ class FeatureExtractor(object):
         self.dataset = Dataset()
         for audio_file in audio_files:
             fname = os.path.splitext(os.path.split(audio_file)[-1])[0]
+            print(fname)
             mid_file = os.path.join(label_path, '%s.mid' % fname)
             if not os.path.isfile(mid_file):
                 mid_file = None
