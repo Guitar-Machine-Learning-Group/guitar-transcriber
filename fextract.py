@@ -96,7 +96,7 @@ class FeatureExtractor(object):
         print len(s.X)
         print len(s.X[0])
 
-        x = np.arange(0, self.window_size, 1)
+        x = np.arange(0, self.window_size/self.sampling_rate, 1/self.sampling_rate)
         for i in range(len(s.X[0])):
             window = s.X[:, i]
 
@@ -107,26 +107,28 @@ class FeatureExtractor(object):
 
             plt.subplot(211)
             plt.xlabel('time')
-            plt.ylabel('amptitude?')
+            plt.ylabel('amptitude')
             plt.title('raw input waveform')
-            plt.axis([0, self.window_size, -1, 1])
+            plt.axis([0, self.window_size/self.sampling_rate, -1, 1])
             plt.plot(x,y)
             #plt.show()
 
             # perform fft
             sp = np.fft.fft(window)
-            freq = np.fft.fftfreq(len(window))
+            freq = np.fft.fftfreq(self.window_size,1/self.sampling_rate)
 
             print len(freq)
             print freq
             print len(sp.real)
-            print sp.real
+            print (sp.real)
 
             plt.subplot(212)
             plt.xlabel('frequency')
-            plt.ylabel('?')
+            plt.ylabel('amptitude')
             plt.title('FFT result')
-            plt.plot(freq, sp.real, freq, sp.imag)
+            #plt.plot(freq, sp.real, freq, sp.imag)
+            plt.axis([0, 3000, 0, 200])
+            plt.plot(freq, np.absolute(sp.real))
 
 
             plt.tight_layout()
