@@ -4,6 +4,7 @@ import os
 import numpy as np
 import sys
 import librosa
+import math
 from scipy import signal
 
 from dataset import SongData, Dataset
@@ -38,7 +39,6 @@ class FeatureExtractor(object):
 
         # 51 pitches: MIDI number 36 (C2: 65.406Hz) -- MIDI number 86 (D6: 1174.7Hz)
         self.num_pitches = 51
-
         self.window_size = window_size
         self.hop_size = hop_size
         self.sampling_rate = sampling_rate
@@ -93,50 +93,13 @@ class FeatureExtractor(object):
             self._speak('\rextracting features: %d%%' % int((i+1)/num_songs * 100))
 
         self._speak('\n')
-        print len(s.X)
-        print len(s.X[0])
 
-        x = np.arange(0, self.window_size, 1)
+        x = np.arange(0, self.window_size/self.sampling_rate, 1/self.sampling_rate)
         for i in range(len(s.X[0])):
             window = s.X[:, i]
-
-            y = window #s.x[0:self.window_size]
-
-            fig = plt.figure(1,figsize=(14,7))
-            fig.canvas.set_window_title('Window '+str(i))
-
-            plt.subplot(211)
-            plt.xlabel('time')
-            plt.ylabel('amptitude?')
-            plt.title('raw input waveform')
-            plt.axis([0, self.window_size, -1, 1])
-            plt.plot(x,y)
-            #plt.show()
-
-            # perform fft
             sp = np.fft.fft(window)
-            freq = np.fft.fftfreq(len(window))
-
-            print len(freq)
-            print freq
-            print len(sp.real)
-            print sp.real
-
-            plt.subplot(212)
-            plt.xlabel('frequency')
-            plt.ylabel('?')
-            plt.title('FFT result')
-            plt.plot(freq, sp.real, freq, sp.imag)
-
-
-            plt.tight_layout()
-            plt.show()
-            
-
-        
-            
-
-
+            freq = np.fft.fftfreq(self.window_size, 1 / self.sampling_rate)
+            s.X[:, i] = np.sqrt(sp.real ** 2 + sp.imag ** 2)
 
     def _extract_labels(self):
         """
@@ -176,11 +139,7 @@ class FeatureExtractor(object):
                 s.Y[iwin, pitch_indicators] = 1.0
 
             self._speak('\rextracting labels: %d%%' % int((i+1)/num_songs * 100))
-
         self._speak('\n')
-        print s.Y
-        print len(s.Y)
-        print len(s.Y[0])
 
     def _speak(self, msg):
         """
@@ -190,3 +149,5 @@ class FeatureExtractor(object):
         sys.stdout.write(msg)
         sys.stdout.flush()
 
+    def getFeature(self):
+        return self.f
