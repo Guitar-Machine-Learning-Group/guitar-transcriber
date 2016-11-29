@@ -1,4 +1,5 @@
 from fextract import FeatureExtractor
+import tensorflow as tf
 
 
 class GuitarTranscriber(object):
@@ -32,6 +33,7 @@ class GuitarTranscriber(object):
         """
 
         for s in fe.dataset.songs():
+            print "s:", s
             pass
 
 if __name__ == "__main__":
