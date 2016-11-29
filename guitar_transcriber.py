@@ -32,8 +32,12 @@ class GuitarTranscriber(object):
         """
 
         for s in fe.dataset.songs():
+            #"""
+            # check the num_wins and win_size for human
             print("X_num_wins:",len(s.X),"X_win_size:",len(s.X[0]))
             print("Y_num_wins (should equal to X_num_wins):",len(s.Y),"Y_win_size(should be 51):",len(s.Y[0]))
+            #"""
+
             pass
 
 if __name__ == "__main__":

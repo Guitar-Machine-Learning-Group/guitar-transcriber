@@ -90,71 +90,71 @@ class FeatureExtractor(object):
             """
             s.X = librosa.util.frame(s.x, frame_length=self.window_size, hop_length=self.hop_size)
 
+            '''
+                Changes start here
+            '''
+            num_wins = len(s.X[0])
+            feature_matrix = np.zeros((num_wins,self.window_size))
+
+            # print len(s.X)
+            # print len(s.X[0])
+
+            x = np.arange(0, self.window_size/self.sampling_rate, 1/self.sampling_rate)
+            for win_i in range(num_wins):
+                window = s.X[:, win_i]
+
+                """ 
+                # draw row input gragh for human 
+                y = window #s.x[0:self.window_size]
+
+                fig = plt.figure(1,figsize=(14,7))
+                fig.canvas.set_window_title('Window '+str(i))
+
+                plt.subplot(211)
+                plt.xlabel('time')
+                plt.ylabel('amptitude')
+                plt.title('raw input waveform')
+                plt.axis([0, self.window_size/self.sampling_rate, -1, 1])
+                plt.plot(x,y)
+                """
+
+                # perform fft
+                sp = np.fft.fft(window)
+                freq = np.fft.fftfreq(self.window_size,1/self.sampling_rate)
+
+                # print len(freq)
+                # print freq
+                # print len(sp.real)
+                # print (sp.real)
+
+                """
+                # draw the calculated fft result for human
+                plt.subplot(212)
+                plt.xlabel('frequency')
+                plt.ylabel('amptitude')
+                plt.title('FFT result')
+                #plt.plot(freq, sp.real, freq, sp.imag)
+                plt.axis([0, 3000, 0, 200])
+                plt.plot(freq, np.absolute(sp.real))
+
+                plt.tight_layout()
+                plt.show()
+                """
+
+                # store the calculated features
+                feature_matrix[i,:] = np.absolute(sp.real)
+
+            # pass the calculated feature to s.x
+            s.X = feature_matrix
+
+            '''
+                Changes end here
+            '''
+
             # update progress bar
             self._speak('\rextracting features: %d%%' % int((i+1)/num_songs * 100))
 
         self._speak('\n')
-
-        '''
-            Changes start here
-        '''
-        num_wins = len(s.X[0])
-        feature_matrix = np.zeros((num_wins,self.window_size))
-
-        # print len(s.X)
-        # print len(s.X[0])
-
-        x = np.arange(0, self.window_size/self.sampling_rate, 1/self.sampling_rate)
-        for i in range(num_wins):
-            window = s.X[:, i]
-
-            """ 
-            # draw row input gragh for human 
-            y = window #s.x[0:self.window_size]
-
-            fig = plt.figure(1,figsize=(14,7))
-            fig.canvas.set_window_title('Window '+str(i))
-
-            plt.subplot(211)
-            plt.xlabel('time')
-            plt.ylabel('amptitude')
-            plt.title('raw input waveform')
-            plt.axis([0, self.window_size/self.sampling_rate, -1, 1])
-            plt.plot(x,y)
-            """
-
-            # perform fft
-            sp = np.fft.fft(window)
-            freq = np.fft.fftfreq(self.window_size,1/self.sampling_rate)
-
-            # print len(freq)
-            # print freq
-            # print len(sp.real)
-            # print (sp.real)
-
-            """
-            # draw the calculated fft result for human
-            plt.subplot(212)
-            plt.xlabel('frequency')
-            plt.ylabel('amptitude')
-            plt.title('FFT result')
-            #plt.plot(freq, sp.real, freq, sp.imag)
-            plt.axis([0, 3000, 0, 200])
-            plt.plot(freq, np.absolute(sp.real))
-
-            plt.tight_layout()
-            plt.show()
-            """
-
-            # store the calculated features
-            feature_matrix[i,:] = np.absolute(sp.real)
-
-        # pass the calculated feature to s.x
-        s.X = feature_matrix
-
-        '''
-            Changes end here
-        '''
 
     def _extract_labels(self):
         """
