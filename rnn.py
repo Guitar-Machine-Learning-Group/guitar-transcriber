@@ -51,6 +51,9 @@ def main(_):
 	with tf.Graph().as_default():
 		initializer = tf.random_uniform_initializer( -config.init_scale,
 		                                              config.init_scale )
-
+	with tf.Session() as sess:
+		output = sess.run()
+		print(output)
+		
 if __name__ == "__main__":
 	tf.app.run()
