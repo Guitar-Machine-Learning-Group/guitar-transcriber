@@ -6,20 +6,17 @@ import time
 import numpy as np
 import tensorflow as tf
 
-from tensorflow.models.rnn.ptb import reader
+import reader
 
 flags = tf.flags
 logging = tf.logging
 
-flags.DEFINE_string(
-    "model", "small",
-    "A type of model. Possible options are: small, medium, large.")
-flags.DEFINE_string("data_path", None,
-                    "Where the training/test data is stored.")
-flags.DEFINE_string("save_path", None,
-                    "Model output directory.")
-flags.DEFINE_bool("use_fp16", False,
-                  "Train using 16-bit floats instead of 32bit floats")
+flags.DEFINE_string( "data_path", None, \
+                     "Where the training/test data is stored.")
+flags.DEFINE_string( "save_path", None, \
+                     "Model output directory.")
+flags.DEFINE_bool(   "use_fp16", False, \
+                     "Train using 16-bit floats instead of 32bit floats")
 
 FLAGS = flags.FLAGS
 
@@ -38,12 +35,22 @@ class Config( object ):
 	batch_size    = 20
 	vocab_size    = 10000
 
-def main():
+def main(_):
 
 	if not FLAGS.data_path:
 		raise ValueError( "Must set --data_path to valid data directory" )
 
-	config = Config
+	# Reader.py not start yet
+	input_data = reader.read( FLAGS.data_path )
+
+	config                 = Config
+	eval_config            = Config
+	eval_config.batch_size = 1
+	eval_config.num_steps  = 1
+
+	with tf.Graph().as_default():
+		initializer = tf.random_uniform_initializer( -config.init_scale,
+		                                              config.init_scale )
 
 if __name__ == "__main__":
 	tf.app.run()
