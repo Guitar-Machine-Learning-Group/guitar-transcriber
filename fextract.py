@@ -98,14 +98,18 @@ class FeatureExtractor(object):
         '''
             Changes start here
         '''
+        num_wins = len(s.X[0])
+        feature_matrix = np.zeros((num_wins,self.window_size))
 
-        print len(s.X)
-        print len(s.X[0])
+        # print len(s.X)
+        # print len(s.X[0])
 
         x = np.arange(0, self.window_size/self.sampling_rate, 1/self.sampling_rate)
-        for i in range(len(s.X[0])):
+        for i in range(num_wins):
             window = s.X[:, i]
 
+            """ 
+            # draw row input gragh for human 
             y = window #s.x[0:self.window_size]
 
             fig = plt.figure(1,figsize=(14,7))
@@ -117,17 +121,19 @@ class FeatureExtractor(object):
             plt.title('raw input waveform')
             plt.axis([0, self.window_size/self.sampling_rate, -1, 1])
             plt.plot(x,y)
-            #plt.show()
+            """
 
             # perform fft
             sp = np.fft.fft(window)
             freq = np.fft.fftfreq(self.window_size,1/self.sampling_rate)
 
-            print len(freq)
-            print freq
-            print len(sp.real)
-            print (sp.real)
+            # print len(freq)
+            # print freq
+            # print len(sp.real)
+            # print (sp.real)
 
+            """
+            # draw the calculated fft result for human
             plt.subplot(212)
             plt.xlabel('frequency')
             plt.ylabel('amptitude')
@@ -136,9 +142,15 @@ class FeatureExtractor(object):
             plt.axis([0, 3000, 0, 200])
             plt.plot(freq, np.absolute(sp.real))
 
-
             plt.tight_layout()
             plt.show()
+            """
+
+            # store the calculated features
+            feature_matrix[i,:] = np.absolute(sp.real)
+
+        # pass the calculated feature to s.x
+        s.X = feature_matrix
 
         '''
             Changes end here
@@ -189,9 +201,9 @@ class FeatureExtractor(object):
             Changes start here
         '''
 
-        print s.Y
-        print len(s.Y)
-        print len(s.Y[0])
+        # print s.Y
+        # print len(s.Y)
+        # print len(s.Y[0])
 
         '''
             Changes end here
