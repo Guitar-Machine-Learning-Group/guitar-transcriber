@@ -1,14 +1,15 @@
 from __future__ import division
-from glob import glob
+
 import os
-import numpy as np
 import sys
 import librosa
-from scipy import signal
+import numpy as np
+import matplotlib.pyplot as plt
 
+from scipy import signal
+from glob import glob
 from dataset import SongData, Dataset
 from midiio import MidiIO
-import matplotlib.pyplot as plt
 
 try:
     xrange
@@ -93,6 +94,11 @@ class FeatureExtractor(object):
             self._speak('\rextracting features: %d%%' % int((i+1)/num_songs * 100))
 
         self._speak('\n')
+
+        '''
+            Changes start here
+        '''
+
         print len(s.X)
         print len(s.X[0])
 
@@ -133,12 +139,10 @@ class FeatureExtractor(object):
 
             plt.tight_layout()
             plt.show()
-            
 
-        
-            
-
-
+        '''
+            Changes end here
+        '''
 
     def _extract_labels(self):
         """
@@ -180,9 +184,18 @@ class FeatureExtractor(object):
             self._speak('\rextracting labels: %d%%' % int((i+1)/num_songs * 100))
 
         self._speak('\n')
+
+        '''
+            Changes start here
+        '''
+
         print s.Y
         print len(s.Y)
         print len(s.Y[0])
+
+        '''
+            Changes end here
+        '''
 
     def _speak(self, msg):
         """
