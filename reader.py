@@ -29,77 +29,6 @@ from tensorflow.python.framework import dtypes
 
 SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
 
-
-def _read32(bytestream):
-  dt = numpy.dtype(numpy.uint32).newbyteorder('>')
-  return numpy.frombuffer(bytestream.read(4), dtype=dt)[0]
-
-
-def extract_images(f):
-  """Extract the images into a 4D uint8 numpy array [index, y, x, depth].
-
-  Args:
-    f: A file object that can be passed into a gzip reader.
-
-  Returns:
-    data: A 4D unit8 numpy array [index, y, x, depth].
-
-  Raises:
-    ValueError: If the bytestream does not start with 2051.
-
-  """
-  print('Extracting', f.name)
-  with gzip.GzipFile(fileobj=f) as bytestream:
-    magic = _read32(bytestream)
-    if magic != 2051:
-      raise ValueError('Invalid magic number %d in MNIST image file: %s' %
-                       (magic, f.name))
-    num_images = _read32(bytestream)
-    rows = _read32(bytestream)
-    cols = _read32(bytestream)
-    buf = bytestream.read(rows * cols * num_images)
-    data = numpy.frombuffer(buf, dtype=numpy.uint8)
-    data = data.reshape(num_images, rows, cols, 1)
-    return data
-
-
-def dense_to_one_hot(labels_dense, num_classes):
-  """Convert class labels from scalars to one-hot vectors."""
-  num_labels = labels_dense.shape[0]
-  index_offset = numpy.arange(num_labels) * num_classes
-  labels_one_hot = numpy.zeros((num_labels, num_classes))
-  labels_one_hot.flat[index_offset + labels_dense.ravel()] = 1
-  return labels_one_hot
-
-
-def extract_labels(f, one_hot=False, num_classes=10):
-  """Extract the labels into a 1D uint8 numpy array [index].
-
-  Args:
-    f: A file object that can be passed into a gzip reader.
-    one_hot: Does one hot encoding for the result.
-    num_classes: Number of classes for the one hot encoding.
-
-  Returns:
-    labels: a 1D unit8 numpy array.
-
-  Raises:
-    ValueError: If the bystream doesn't start with 2049.
-  """
-  print('Extracting', f.name)
-  with gzip.GzipFile(fileobj=f) as bytestream:
-    magic = _read32(bytestream)
-    if magic != 2049:
-      raise ValueError('Invalid magic number %d in MNIST label file: %s' %
-                       (magic, f.name))
-    num_items = _read32(bytestream)
-    buf = bytestream.read(num_items)
-    labels = numpy.frombuffer(buf, dtype=numpy.uint8)
-    if one_hot:
-      return dense_to_one_hot(labels, num_classes)
-    return labels
-
-
 class DataSet(object):
 
   def __init__(self,
@@ -160,9 +89,9 @@ class DataSet(object):
   def next_batch(self, batch_size, fake_data=False):
     """Return the next `batch_size` examples from this data set."""
     if fake_data:
-      fake_image = [1] * 784
+      fake_image = [1] * 2048
       if self.one_hot:
-        fake_label = [1] + [0] * 9
+        fake_label = [1] + [0] * 50
       else:
         fake_label = 0
       return [fake_image for _ in xrange(batch_size)], [
@@ -186,12 +115,11 @@ class DataSet(object):
     return self._images[start:end], self._labels[start:end]
 
 
-def read_data_sets(train_dir,
-                   fake_data=False,
+def read_data_sets(fake_data=False,
                    one_hot=False,
                    dtype=dtypes.float32,
                    reshape=True,
-                   validation_size=5000):
+                   validation_size=2048):
   if fake_data:
 
     def fake():
@@ -202,50 +130,39 @@ def read_data_sets(train_dir,
     test = fake()
     return base.Datasets(train=train, validation=validation, test=test)
 
-  TRAIN_IMAGES = 'train-images-idx3-ubyte.gz'
-  TRAIN_LABELS = 'train-labels-idx1-ubyte.gz'
-  TEST_IMAGES = 't10k-images-idx3-ubyte.gz'
-  TEST_LABELS = 't10k-labels-idx1-ubyte.gz'
+  TRAIN_FEATURES = '3doorsdown_herewithoutyou_features.npy'
+  TRAIN_LABELS   = '3doorsdown_herewithoutyou_labels.npy'
 
-  local_file = base.maybe_download(TRAIN_IMAGES, train_dir,
-                                   SOURCE_URL + TRAIN_IMAGES)
-  with open(local_file, 'rb') as f:
-    train_images = extract_images(f)
+  TEST_FEATURES  = '3doorsdown_herewithoutyou_features.npy'
+  TEST_LABELS    = '3doorsdown_herewithoutyou_labels.npy'
 
-  local_file = base.maybe_download(TRAIN_LABELS, train_dir,
-                                   SOURCE_URL + TRAIN_LABELS)
-  with open(local_file, 'rb') as f:
-    train_labels = extract_labels(f, one_hot=one_hot)
+  train_features = numpy.load( TRAIN_FEATURES )
+  train_labels   = numpy.load( TRAIN_LABELS )
+  test_features  = numpy.load( TEST_FEATURES )
+  test_labels    = numpy.load( TEST_LABELS )
 
-  local_file = base.maybe_download(TEST_IMAGES, train_dir,
-                                   SOURCE_URL + TEST_IMAGES)
-  with open(local_file, 'rb') as f:
-    test_images = extract_images(f)
+  train_features = train_features.reshape( ( train_features.shape[0], 2048, 1, 1 ) )
+  train_labels   = train_labels.reshape(   ( train_labels.shape[0],   51,   1, 1 ) )
+  test_features  = test_features.reshape(  ( test_features.shape[0],  2048, 1, 1 ) )
+  test_labels    = test_labels.reshape(    ( test_labels.shape[0],    51,   1, 1 ) )
 
-  local_file = base.maybe_download(TEST_LABELS, train_dir,
-                                   SOURCE_URL + TEST_LABELS)
-  with open(local_file, 'rb') as f:
-    test_labels = extract_labels(f, one_hot=one_hot)
-
-  if not 0 <= validation_size <= len(train_images):
+  if not 0 <= validation_size <= len( train_features ):
     raise ValueError(
         'Validation size should be between 0 and {}. Received: {}.'
-        .format(len(train_images), validation_size))
+        .format( len( train_features ), validation_size ) )
 
-  validation_images = train_images[:validation_size]
-  validation_labels = train_labels[:validation_size]
-  train_images = train_images[validation_size:]
-  train_labels = train_labels[validation_size:]
+  validation_features = train_features[:validation_size]
+  validation_labels   = train_labels[:validation_size]
+  train_features      = train_features[validation_size:]
+  train_labels        = train_labels[validation_size:]
 
-  train = DataSet(train_images, train_labels, dtype=dtype, reshape=reshape)
-  validation = DataSet(validation_images,
+  train = DataSet(train_features, train_labels, dtype=dtype, reshape=reshape)
+
+  validation = DataSet(validation_features,
                        validation_labels,
                        dtype=dtype,
                        reshape=reshape)
-  test = DataSet(test_images, test_labels, dtype=dtype, reshape=reshape)
+
+  test = DataSet(test_features, test_labels, dtype=dtype, reshape=reshape)
 
   return base.Datasets(train=train, validation=validation, test=test)
-
-
-def load_mnist(train_dir='MNIST-data'):
-  return read_data_sets(train_dir)

@@ -100,7 +100,8 @@ class FeatureExtractor(object):
 
             s.X = amplitude
 
-            np.save( "%s.npy" %s.audio_path.split('/')[-1].split('.')[0], s.X )
+            np.save( "%s_features.npy" \
+                %s.audio_path.split('/')[-1].split('.')[0], s.X )
             
 
             # update progress bar
@@ -193,6 +194,9 @@ class FeatureExtractor(object):
                 # rwows are binary vectors, where a 1 indicates the presence of MIDI number
                 pitch_indicators = np.unique(nmat[nidx,0]).astype(np.uint32) - self.pitch_offset
                 s.Y[iwin, pitch_indicators] = 1.0
+
+            np.save( "%s_labels.npy" \
+                %s.audio_path.split('/')[-1].split('.')[0], s.Y )
 
             self._speak('\rextracting labels: %d%%' % int((i+1)/num_songs * 100))
 
