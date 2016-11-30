@@ -93,16 +93,17 @@ class FeatureExtractor(object):
 
             # update progress bar
             self._speak('\rextracting features: %d%%' % int((i+1)/num_songs * 100))
+            for i in range(len(s.X[0])):
+                window = s.X[:, i]
+                sp = np.fft.fft(window)
+                freq = np.fft.fftfreq(self.window_size, 1 / self.sampling_rate)
+                s.X[:, i] = np.sqrt(np.power(sp.real, 2) + np.power(sp.imag, 2))
+            np.save(self.fname+'_fdata', s.X)
 
         self._speak('\n')
 
         x = np.arange(0, self.window_size/self.sampling_rate, 1/self.sampling_rate)
-        for i in range(len(s.X[0])):
-            window = s.X[:, i]
-            sp = np.fft.fft(window)
-            freq = np.fft.fftfreq(self.window_size, 1 / self.sampling_rate)
-            s.X[:, i] = np.sqrt(np.power(sp.real, 2) + np.power(sp.imag, 2))
-        np.save('test1', s.X)
+
 
     def _extract_labels(self):
         """
