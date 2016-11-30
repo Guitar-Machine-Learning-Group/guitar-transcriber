@@ -8,7 +8,7 @@ np.set_printoptions( threshold = np.inf )
 import tensorflow as tf
 
 from scoreevent import Chord, Note
-import reader as input_data
+from tensorflow.python.ops import rnn, rnn_cell
 
 '''
 input > weight > hidden layer 1 (activation function) > weights >
@@ -38,75 +38,47 @@ FLAGS = flags.FLAGS
 input data here for train will be 60,000 dataset contains 28*28 pixels image
 '''
 #song = input_data.read_data_sets( "/tmp/data/", one_hot=True )
-song  = input_data.read_data_sets()
+song_x      = np.load("3doorsdown_herewithoutyou_features.npy")
+song_y      = np.load("3doorsdown_herewithoutyou_labels.npy")
+song_test_x = song_x
+song_test_y = song_y
+input_nodes = song_x.shape[1]
 
-n_nodes_hl1 = 500
-n_nodes_hl2 = 500
-n_nodes_hl3 = 500
 n_classes   = 51
 batch_size  = 1
+rnn_size    = 128
+chunk_size  = song_x.shape[1]
+n_chunks    = 1
+hm_epochs   = 3
 
-x = tf.placeholder( 'float', [ None, 2048 ] )
+x = tf.placeholder( 'float', [ None, n_chunks, chunk_size ] )
 y = tf.placeholder( 'float' )
 
-class Config( object ):
+def recurrent_neural_network_model( x ):
 
-	init_scale    = 0.1
-	learning_rate = 1.0
-	max_grad_norm = 5
-	num_layers    = 2
-	num_steps     = 20
-	hidden_size   = 200
-	max_epoch     = 4
-	max_max_epoch = 13
-	keep_prob     = 1.0
-	lr_decay      = 0.5
-	batch_size    = 20
-	vocab_size    = 10000
+	layer = { 'weights': tf.Variable( tf.random_normal( \
+		                              [ rnn_size, n_classes ] ) ),
+              'biases':  tf.Variable( tf.random_normal( \
+              	                      [ n_classes ] ) ) }
 
-def neural_network_model( data ):
+	x = tf.transpose( x, [ 1, 0, 2 ] )
+	x = tf.reshape( x, [ -1, chunk_size ] )
+	x = tf.split( 0, n_chunks, x )
 
-	hidden_1_layer = { 'weights': tf.Variable( tf.random_normal( \
-	                                         [ 2048, n_nodes_hl1 ] ) ), \
-	                   'biases':  tf.Variable( tf.random_normal( \
-	                                           [n_nodes_hl1] ) ) }
-	hidden_2_layer = { 'weights': tf.Variable( tf.random_normal( \
-	                                         [ n_nodes_hl1, n_nodes_hl2 ] ) ), \
-	                   'biases':  tf.Variable( tf.random_normal( \
-	                                           [n_nodes_hl2] ) ) }
-	hidden_3_layer = { 'weights': tf.Variable( tf.random_normal( \
-	                                         [ n_nodes_hl2, n_nodes_hl3 ] ) ), \
-	                   'biases':  tf.Variable( tf.random_normal( \
-	                                           [n_nodes_hl3] ) ) }
-	output_layer   = { 'weights': tf.Variable( tf.random_normal( \
-	                                         [ n_nodes_hl3, n_classes ] ) ), \
-	                   'biases':  tf.Variable( tf.random_normal( \
-	                                           [n_classes] ) ) }
+	lstm_cell       = rnn_cell.BasicLSTMCell( rnn_size, state_is_tuple = True )
+	outputs, states = rnn.rnn( lstm_cell, x, dtype = tf.float32 )
 
-	l1     = tf.add( tf.matmul( data, hidden_1_layer['weights'] ), \
-	                 hidden_1_layer['biases'] )
-	l1     = tf.nn.relu(l1)
-
-	l2     = tf.add( tf.matmul( l1,   hidden_2_layer['weights'] ), \
-	                 hidden_2_layer['biases'] )
-	l2     = tf.nn.relu(l2)
-
-	l3     = tf.add( tf.matmul( l2,   hidden_3_layer['weights'] ), \
-	                 hidden_3_layer['biases'] )
-	l3     = tf.nn.relu(l3)
-
-	output = tf.matmul( l3, output_layer['weights'] ) + output_layer['biases']
+	output          = tf.matmul( outputs[-1], \
+    	                         layer['weights'] ) + layer['biases']
 
 	return output
 
-def train_neural_network( x ):
+def train_recurrent_neural_network( x ):
 
-	prediction = neural_network_model( x )
+	prediction = recurrent_neural_network_model( x )
 	cost       = tf.reduce_mean( \
 	                 tf.nn.softmax_cross_entropy_with_logits( prediction, y ) )
 	optimizer  = tf.train.AdamOptimizer().minimize( cost )
-
-	hm_epochs  = 10
 
 	with tf.Session() as sess:
 
@@ -116,13 +88,23 @@ def train_neural_network( x ):
 
 			epoch_loss = 0
 			
-			for _ in range( int( song.train.num_examples / batch_size ) ):
+			idx = 0
 
-				epoch_x, epoch_y = song.train.next_batch( batch_size )
-				_, c             = sess.run( [ optimizer, cost ], \
-				                             feed_dict = { x: epoch_x, \
-				                                           y: epoch_y } )
-				epoch_loss      += c
+			while idx < song_x.shape[0]:
+
+				start       = idx
+				end         = idx + batch_size
+
+				batch_x     = np.array( song_x[start:end] )
+				batch_x     = batch_x.reshape( \
+					                  ( batch_size, n_chunks, chunk_size ) )
+				batch_y     = np.array( song_y[start:end] )
+
+				_, c        = sess.run( [ optimizer, cost ], \
+				                          feed_dict = { x: batch_x, \
+				                                        y: batch_y } )
+				epoch_loss += c
+				idx        += batch_size
 			
 
 			print( "Epoch %i completed out of %i, loss: %f" \
@@ -131,31 +113,9 @@ def train_neural_network( x ):
 		correct  = tf.equal( tf.argmax( prediction, 1 ), tf.argmax( y, 1 ) )
 		accuracy = tf.reduce_mean( tf.cast( correct, 'float' ) )
 
-		print( "Accuracy: %f" %accuracy.eval( { x: song.test.images, \
-		                                        y: song.test.labels } ) )
-
-def main(_):
-
-	if not FLAGS.data_path:
-		raise ValueError( "Must set --data_path to valid data directory" )
-
-	# Reader.py not start yet
-	input_data = reader.read( FLAGS.data_path )
-
-	config                 = Config
-	eval_config            = Config
-	eval_config.batch_size = 1
-	eval_config.num_steps  = 1
-
-	with tf.Graph().as_default():
-
-		initializer = tf.random_uniform_initializer( -config.init_scale,
-		                                              config.init_scale )
-	with tf.Session() as sess:
-
-		output = sess.run()
-		print(output)
+		print( "Accuracy: %f" %accuracy.eval( \
+			{ x: song_test_x.reshape( ( -1, n_chunks, chunk_size ) ), \
+		      y: song_test_y } ) )
 		
 if __name__ == "__main__":
-	#tf.app.run()
-	train_neural_network( x )
+	train_recurrent_neural_network( x )
