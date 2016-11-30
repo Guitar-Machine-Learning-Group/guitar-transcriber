@@ -60,7 +60,6 @@ def extract_images(f):
     buf = bytestream.read(rows * cols * num_images)
     data = numpy.frombuffer(buf, dtype=numpy.uint8)
     data = data.reshape(num_images, rows, cols, 1)
-    print(data.shape)
     return data
 
 
@@ -212,7 +211,7 @@ def read_data_sets(train_dir,
                                    SOURCE_URL + TRAIN_IMAGES)
   with open(local_file, 'rb') as f:
     train_images = extract_images(f)
-  raise ValueError("1")
+
   local_file = base.maybe_download(TRAIN_LABELS, train_dir,
                                    SOURCE_URL + TRAIN_LABELS)
   with open(local_file, 'rb') as f:

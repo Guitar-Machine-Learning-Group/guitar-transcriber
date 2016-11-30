@@ -4,7 +4,10 @@ from __future__ import print_function
 
 import time
 import numpy as np
+np.set_printoptions( threshold = np.inf )
 import tensorflow as tf
+
+from scoreevent import Chord, Note
 import reader as input_data
 
 '''
@@ -35,14 +38,15 @@ FLAGS = flags.FLAGS
 input data here for train will be 60,000 dataset contains 28*28 pixels image
 '''
 mnist = input_data.read_data_sets( "/tmp/data/", one_hot=True )
+song  = np.load( "3doorsdown_herewithoutyou.npy" )
 
 n_nodes_hl1 = 500
 n_nodes_hl2 = 500
 n_nodes_hl3 = 500
-n_classes   = 10
+n_classes   = 51
 batch_size  = 100
 
-x = tf.placeholder( 'float', [ None, 784 ] )
+x = tf.placeholder( 'float', [ None, 2048 ] )
 y = tf.placeholder( 'float' )
 
 class Config( object ):

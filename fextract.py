@@ -81,14 +81,27 @@ class FeatureExtractor(object):
             """
             TODO: calculate your audio features here
             You can use librosa to calculate the audio features you want to use.
-            If you want to calculate your own features, you can slice the audio samples into frames using 
-                librosa.util.frame(s.x, frame_length=self.window_size, hop_length=self.hop_size) and then
-                calculate your features for each frame of audio samples.
+            If you want to calculate your own features, you can slice the audio 
+            samples into frames using librosa.util.frame(s.x, frame_length=self.
+            window_size, hop_length=self.hop_size) and then calculate your 
+            features for each frame of audio samples.
             # In the end, you'll have s.X = [window_index, feature_index]
 
             For now, your audio features are simply the windowed samples of the song. It won't work for pitch detection.
             """
             s.X = librosa.util.frame(s.x, frame_length=self.window_size, hop_length=self.hop_size)
+            s.X = np.transpose( s.X )
+
+            Y    = np.fft.fft( s.X )
+
+            freq = np.fft.fftfreq( self.window_size, 1 / self.sampling_rate )
+                
+            amplitude = np.sqrt( np.power( Y.real, 2 ) + np.power( Y.imag, 2 ) )
+
+            s.X = amplitude
+
+            np.save( "%s.npy" %s.audio_path.split('/')[-1].split('.')[0], s.X )
+            
 
             # update progress bar
             self._speak('\rextracting features: %d%%' % int((i+1)/num_songs * 100))
@@ -97,7 +110,7 @@ class FeatureExtractor(object):
 
         '''
             Changes start here
-        '''
+        
 
         print( len(s.X) )
         print( len(s.X[0]) )
@@ -110,7 +123,7 @@ class FeatureExtractor(object):
 
             fig = plt.figure(1,figsize=(14,7))
             fig.canvas.set_window_title('Window '+str(i))
-
+            
             plt.subplot(211)
             plt.xlabel('time')
             plt.ylabel('amptitude')
@@ -118,7 +131,7 @@ class FeatureExtractor(object):
             plt.axis([0, self.window_size/self.sampling_rate, -1, 1])
             plt.plot(x,y)
             #plt.show()
-
+            
             # perform fft
             sp = np.fft.fft(window)
             freq = np.fft.fftfreq(self.window_size,1/self.sampling_rate)
@@ -127,7 +140,7 @@ class FeatureExtractor(object):
             print( freq )
             print( len(sp.real) )
             print( (sp.real) )
-
+            
             plt.subplot(212)
             plt.xlabel('frequency')
             plt.ylabel('amptitude')
@@ -139,8 +152,8 @@ class FeatureExtractor(object):
 
             plt.tight_layout()
             plt.show()
-
-        '''
+            
+        
             Changes end here
         '''
 
@@ -188,11 +201,11 @@ class FeatureExtractor(object):
         '''
             Changes start here
         '''
-
+        '''
         print( s.Y )
         print( len(s.Y) )
         print( len(s.Y[0]) )
-
+        '''
         '''
             Changes end here
         '''
