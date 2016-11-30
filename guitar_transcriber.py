@@ -1,5 +1,6 @@
 from fextract import FeatureExtractor
 import tensorflow as tf
+from tensorflow.examples.tutorials.mnist import input_data
 
 
 class GuitarTranscriber(object):
@@ -33,8 +34,11 @@ class GuitarTranscriber(object):
         """
 
         for s in fe.dataset.songs():
-            print "s:", s
             pass
+            # print "s:", s.X
+            # print "len(s)", len(s.X)
+            # print "len(s[0])", len(s.X[0])
+
 
 if __name__ == "__main__":
     audio_path = './audio'
