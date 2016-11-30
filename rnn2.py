@@ -13,7 +13,7 @@ batch_size = 128
 n_inputs = 28
 n_steps = 28
 n_hidden_units = 128
-n_classes = 10
+n_classes = 51
 
 #tf Graph input
 x = tf.placeholder(tf.float32, [None, n_steps, n_inputs])
@@ -72,7 +72,6 @@ train_op = tf.train.AdamOptimizer(lr).minimize(cost)
 correct_pred = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
-#init = tf.initialize_all_variables()
 init = tf.global_variables_initializer()
 with tf.Session() as sess:
     sess.run(init)

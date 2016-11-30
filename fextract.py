@@ -1,15 +1,14 @@
 from __future__ import division
-from glob import glob
+
 import os
-import numpy as np
 import sys
 import librosa
-import math
+import numpy as np
+import matplotlib.pyplot as plt
 from scipy import signal
-
+from glob import glob
 from dataset import SongData, Dataset
 from midiio import MidiIO
-import matplotlib.pyplot as plt
 
 try:
     xrange
@@ -42,7 +41,6 @@ class FeatureExtractor(object):
         self.window_size = window_size
         self.hop_size = hop_size
         self.sampling_rate = sampling_rate
-        self.fname = None
 
         audio_files = []
         if os.path.isdir(audio_path):
@@ -82,28 +80,81 @@ class FeatureExtractor(object):
             """
             TODO: calculate your audio features here
             You can use librosa to calculate the audio features you want to use.
-            If you want to calculate your own features, you can slice the audio samples into frames using 
-                librosa.util.frame(s.x, frame_length=self.window_size, hop_length=self.hop_size) and then
-                calculate your features for each frame of audio samples.
+            If you want to calculate your own features, you can slice the audio 
+            samples into frames using librosa.util.frame(s.x, frame_length=self.
+            window_size, hop_length=self.hop_size) and then calculate your 
+            features for each frame of audio samples.
             # In the end, you'll have s.X = [window_index, feature_index]
 
             For now, your audio features are simply the windowed samples of the song. It won't work for pitch detection.
             """
             s.X = librosa.util.frame(s.x, frame_length=self.window_size, hop_length=self.hop_size)
+            s.X = np.transpose( s.X )
+
+            Y    = np.fft.fft( s.X )
+
+            freq = np.fft.fftfreq( self.window_size, 1 / self.sampling_rate )
+                
+            amplitude = np.sqrt( np.power( Y.real, 2 ) + np.power( Y.imag, 2 ) )
+
+            s.X = amplitude
+            # print (len(s.X[0]))
+            np.save( "%s.npy" %s.audio_path.split('/')[-1].split('.')[0], s.X )
 
             # update progress bar
             self._speak('\rextracting features: %d%%' % int((i+1)/num_songs * 100))
-            for i in range(len(s.X[0])):
-                window = s.X[:, i]
-                sp = np.fft.fft(window)
-                freq = np.fft.fftfreq(self.window_size, 1 / self.sampling_rate)
-                s.X[:, i] = np.sqrt(np.power(sp.real, 2) + np.power(sp.imag, 2))
-            np.save(self.fname+'_fdata', s.X)
 
         self._speak('\n')
 
-        x = np.arange(0, self.window_size/self.sampling_rate, 1/self.sampling_rate)
 
+        '''
+            Changes start here
+        
+
+        print( len(s.X) )
+        print( len(s.X[0]) )
+
+        x = np.arange(0, self.window_size/self.sampling_rate, 1/self.sampling_rate)
+        for i in range(len(s.X[0])):
+            window = s.X[:, i]
+
+            y = window #s.x[0:self.window_size]
+
+            fig = plt.figure(1,figsize=(14,7))
+            fig.canvas.set_window_title('Window '+str(i))
+            
+            plt.subplot(211)
+            plt.xlabel('time')
+            plt.ylabel('amptitude')
+            plt.title('raw input waveform')
+            plt.axis([0, self.window_size/self.sampling_rate, -1, 1])
+            plt.plot(x,y)
+            #plt.show()
+            
+            # perform fft
+            sp = np.fft.fft(window)
+            freq = np.fft.fftfreq(self.window_size,1/self.sampling_rate)
+
+            print( len(freq) )
+            print( freq )
+            print( len(sp.real) )
+            print( (sp.real) )
+            
+            plt.subplot(212)
+            plt.xlabel('frequency')
+            plt.ylabel('amptitude')
+            plt.title('FFT result')
+            #plt.plot(freq, sp.real, freq, sp.imag)
+            plt.axis([0, 3000, 0, 200])
+            plt.plot(freq, np.absolute(sp.real))
+
+
+            plt.tight_layout()
+            plt.show()
+            
+        
+            Changes end here
+        '''
 
     def _extract_labels(self):
         """
@@ -144,6 +195,18 @@ class FeatureExtractor(object):
 
             self._speak('\rextracting labels: %d%%' % int((i+1)/num_songs * 100))
         self._speak('\n')
+
+        '''
+            Changes start here
+        '''
+
+        print( s.Y )
+        print( len(s.Y) )
+        print( len(s.Y[0]) )
+
+        '''
+            Changes end here
+        '''
 
     def _speak(self, msg):
         """
