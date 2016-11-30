@@ -97,18 +97,11 @@ class FeatureExtractor(object):
         self._speak('\n')
 
         x = np.arange(0, self.window_size/self.sampling_rate, 1/self.sampling_rate)
-        # f = open(self.fname + '_rnn.data', 'w')
         for i in range(len(s.X[0])):
             window = s.X[:, i]
-            # print len(window[0])
-            # break
-            # for item in window:
-            #     f.write(item)
-            # f.write('\n')
             sp = np.fft.fft(window)
             freq = np.fft.fftfreq(self.window_size, 1 / self.sampling_rate)
-            s.X[:, i] = np.sqrt(sp.real ** 2 + sp.imag ** 2)
-        # f.close()
+            s.X[:, i] = np.sqrt(np.power(sp.real, 2) + np.power(sp.imag, 2))
         np.save('test1', s.X)
 
     def _extract_labels(self):
