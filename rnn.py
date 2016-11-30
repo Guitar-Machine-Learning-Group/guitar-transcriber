@@ -5,9 +5,19 @@ from __future__ import print_function
 import time
 import numpy as np
 import tensorflow as tf
-from tensorflow.examples.tutorials.mnist import input_data
+import reader as input_data
 
-#import reader
+'''
+input > weight > hidden layer 1 (activation function) > weights >
+hidden layer 2 (activation function) > weights > output layer
+
+compare output to intended output > cost or loss function (cross entropy)
+optimization function (optimizer) > minimize cost (AdamOptimizer..SGD..AdaGrad)
+
+backpropagation
+
+feed forward + backprop = epoch
+'''
 
 flags = tf.flags
 logging = tf.logging
@@ -21,7 +31,9 @@ flags.DEFINE_bool(   "use_fp16", False, \
 
 FLAGS = flags.FLAGS
 
-
+'''
+input data here for train will be 60,000 dataset contains 28*28 pixels image
+'''
 mnist = input_data.read_data_sets( "/tmp/data/", one_hot=True )
 
 n_nodes_hl1 = 500

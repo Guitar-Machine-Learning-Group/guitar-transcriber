@@ -99,8 +99,8 @@ class FeatureExtractor(object):
             Changes start here
         '''
 
-        print len(s.X)
-        print len(s.X[0])
+        print( len(s.X) )
+        print( len(s.X[0]) )
 
         x = np.arange(0, self.window_size/self.sampling_rate, 1/self.sampling_rate)
         for i in range(len(s.X[0])):
@@ -123,10 +123,10 @@ class FeatureExtractor(object):
             sp = np.fft.fft(window)
             freq = np.fft.fftfreq(self.window_size,1/self.sampling_rate)
 
-            print len(freq)
-            print freq
-            print len(sp.real)
-            print (sp.real)
+            print( len(freq) )
+            print( freq )
+            print( len(sp.real) )
+            print( (sp.real) )
 
             plt.subplot(212)
             plt.xlabel('frequency')
@@ -189,9 +189,9 @@ class FeatureExtractor(object):
             Changes start here
         '''
 
-        print s.Y
-        print len(s.Y)
-        print len(s.Y[0])
+        print( s.Y )
+        print( len(s.Y) )
+        print( len(s.Y[0]) )
 
         '''
             Changes end here
