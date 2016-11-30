@@ -42,6 +42,7 @@ class FeatureExtractor(object):
         self.window_size = window_size
         self.hop_size = hop_size
         self.sampling_rate = sampling_rate
+        self.fname = None
 
         audio_files = []
         if os.path.isdir(audio_path):
@@ -54,6 +55,7 @@ class FeatureExtractor(object):
         for audio_file in audio_files:
             fname = os.path.splitext(os.path.split(audio_file)[-1])[0]
             print(fname)
+            self.fname = fname
             mid_file = os.path.join(label_path, '%s.mid' % fname)
             if not os.path.isfile(mid_file):
                 mid_file = None
@@ -95,11 +97,19 @@ class FeatureExtractor(object):
         self._speak('\n')
 
         x = np.arange(0, self.window_size/self.sampling_rate, 1/self.sampling_rate)
+        # f = open(self.fname + '_rnn.data', 'w')
         for i in range(len(s.X[0])):
             window = s.X[:, i]
+            # print len(window[0])
+            # break
+            # for item in window:
+            #     f.write(item)
+            # f.write('\n')
             sp = np.fft.fft(window)
             freq = np.fft.fftfreq(self.window_size, 1 / self.sampling_rate)
             s.X[:, i] = np.sqrt(sp.real ** 2 + sp.imag ** 2)
+        # f.close()
+        np.save('test1', s.X)
 
     def _extract_labels(self):
         """
