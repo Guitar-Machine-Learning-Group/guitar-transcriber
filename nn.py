@@ -4,11 +4,11 @@ from __future__ import print_function
 
 import os
 import sys
-import datetime
 import numpy as np
 import tensorflow as tf
 
 from glob import glob
+from time import time
 from math import floor
 from scoreevent import Chord, Note
 
@@ -45,6 +45,8 @@ flags.DEFINE_bool(   "labels",     True, \
                      "Whether exist label for feature." )
 flags.DEFINE_float(  "train_rate", 0.8, \
                      "How many input for train." )
+flags.DEFINE_bool(   "self_test",  False, \
+                     "Test by training data." )
 
 FLAGS = flags.FLAGS
 
@@ -104,13 +106,17 @@ def train_neural_network( x ):
 
 		sess.run( tf.global_variables_initializer() )
 
-		print("----- Holding the Place -----")
+		print("-----------------------------")
+		print("| --- Holding the Place --- |")
+		print("-----------------------------")
+
+		spent = 0
 
 		for epoch in range( hm_epochs ):
 
+			timer_sta  = time()
 			epoch_loss = 0
-			
-			idx = 0
+			idx        = 0
 
 			while idx < song_x.shape[0]:
 
@@ -125,12 +131,21 @@ def train_neural_network( x ):
 				                                        y: batch_y } )
 				epoch_loss += c
 				idx        += batch_size
+
+			timer_end  = time()
+
+			spent += timer_end - timer_sta
+			timer  = spent * ( hm_epochs - epoch - 1 ) / ( epoch + 1 )
 			
 
-			print( "\x1b[1A\x1b[2K" + \
-				   "Epoch %i completed out of %i (%.1f%%), loss: %f" \
+			print( "\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K" + \
+				   "Epoch %i completed out of %i (%.1f%%), loss: %f\n" \
 			       %( epoch + 1, hm_epochs, 100 * ( epoch + 1 ) / hm_epochs, \
-			       	  epoch_loss ) )
+			       	  epoch_loss ) + \
+			       "Estimate time remains: %ih %im %is\n" \
+			       %( timer // 3600, ( timer % 3600 ) // 60, timer % 60 ) + \
+			       "Already spent:         %ih %im %is" \
+			       %( spent // 3600, ( spent % 3600 ) // 60, spent % 60 ) )
 
 		print()
 
@@ -142,8 +157,8 @@ def train_neural_network( x ):
 		correct  = tf.equal( tf.argmax( prediction, 1 ), tf.argmax( y, 1 ) )
 		accuracy = tf.reduce_mean( tf.cast( correct, 'float' ) )
 
-		print( "Accuracy: %f\n" %accuracy.eval( { x: song_test_x, \
-		                                        y: song_test_y } ) )
+		print( "Accuracy: %.1f\n" %( accuracy.eval( { x: song_test_x, \
+		                                              y: song_test_y } * 100 ) )
 		
 if __name__ == "__main__":
 
@@ -166,7 +181,13 @@ if __name__ == "__main__":
 				raise LookupError( "Can not find labels for" + \
 				                   name.split('/')[-1] )
 
-	num_train = floor( FLAGS.train_rate * len( features ) )
+	if FLAGS.self_test:
+
+		num_train = len( features )
+
+	else:
+
+		num_train = floor( FLAGS.train_rate * len( features ) )
 
 	print( "Total %i songs found, will use %i songs for training.\n" \
 		   %( len( features ), num_train ) + \
@@ -181,6 +202,10 @@ if __name__ == "__main__":
 		song_y = np.vstack( ( song_y, np.load( FLAGS.data_path + "labels/" + \
 			                                   features[i].split('/')[-1] ) ) )
 
+	if FLAGS.self_test:
+
+		num_train = 0
+
 	for i in range( num_train, len( features ) ):
 
 		if i == num_train:
@@ -194,20 +219,23 @@ if __name__ == "__main__":
 			song_test_y = np.vstack( ( song_test_y, \
 				                       np.load( FLAGS.data_path + "labels/" + \
 				                                features[i].split('/')[-1] ) ) )
-
-	print(song_x.shape)
-
+	# Train first 3 songs, test first 3 songs
+	# 3 hl, 100 nd, 100 batch, 100 epoch
 	input_nodes  = song_x.shape[1]
 	layer_levels = 3
 	n_classes    = 51
-	layer_nodes  = [ 50, 50, 50 ]
+	layer_nodes  = [ 100 ] * layer_levels
 	batch_size   = 100
 	hm_epochs    = 100
+
+	print(song_x.shape)
+
+	print( "Number of hidden layers: %i\n" %layer_levels + \
+	       "Number of nodes in hidden layer: \n%s\n" %layer_nodes + \
+	       "Batch size:              %i\n" %batch_size + \
+	       "Number of epochs:        %i\n" %hm_epochs )
 
 	x = tf.placeholder( 'float', [ None, input_nodes ] )
 	y = tf.placeholder( 'float' )
 
-	start_time = datetime.datetime.now()
 	train_neural_network( x )
-	end_time   = datetime.datetime.now()
-	print( "Time spent (H:M:S): %s" %( end_time - start_time ) )
