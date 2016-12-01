@@ -100,7 +100,7 @@ class FeatureExtractor(object):
 
             s.X = amplitude
 
-            if not os.path.exist( "./preprocess/features/" ):
+            if not os.path.exists( "./preprocess/features/" ):
                 os.makedirs( "./preprocess/features/" )
 
             np.save( "./preprocess/features/%s.npy" \
@@ -198,7 +198,7 @@ class FeatureExtractor(object):
                 pitch_indicators = np.unique(nmat[nidx,0]).astype(np.uint32) - self.pitch_offset
                 s.Y[iwin, pitch_indicators] = 1.0
 
-            if not os.path.exist( "./preprocess/labels/" ):
+            if not os.path.exists( "./preprocess/labels/" ):
                 os.makedirs( "./preprocess/labels/" )
 
             np.save( "./preprocess/labels/%s.npy" \
