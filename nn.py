@@ -47,6 +47,8 @@ flags.DEFINE_float(  "train_rate", 0.8, \
                      "How many input for train." )
 flags.DEFINE_bool(   "self_test",  False, \
                      "Test by training data." )
+flags.DEFINE_bool(   "train",      True, \
+                     "Train data or not." )
 
 FLAGS = flags.FLAGS
 
@@ -99,18 +101,26 @@ def train_neural_network( x ):
 	                 tf.nn.sigmoid_cross_entropy_with_logits( prediction, y ) )
 	optimizer  = tf.train.AdamOptimizer().minimize( cost )
 
-	if FLAGS.save:
+	if FLAGS.save or FLAGS.load:
 		saver      = tf.train.Saver()
 
 	with tf.Session() as sess:
 
 		sess.run( tf.global_variables_initializer() )
 
-		print("-----------------------------")
-		print("| --- Holding the Place --- |")
-		print("-----------------------------")
+		if FLAGS.load:
+			new_saver = tf.train.get_checkpoint_state( FLAGS.load_path )
+			if new_saver and new_saver.model_checkpoint_path:
+				saver.restore( sess, new_saver.model_checkpoint_path )
+				print( "Model successfully load from '" + FLAGS.load_path + \
+					   "'" + " file '" + FLAGS.load_name + "'\n" )
 
-		spent = 0
+		if FLAGS.train:
+			print("-----------------------------")
+			print("| --- Holding the Place --- |")
+			print("-----------------------------")
+
+			spent = 0
 
 		for epoch in range( hm_epochs ):
 
@@ -147,7 +157,8 @@ def train_neural_network( x ):
 			       "Already spent:         %ih %im %is" \
 			       %( spent // 3600, ( spent % 3600 ) // 60, spent % 60 ) )
 
-		print()
+		if FLAGS.train:
+			print()
 
 		if FLAGS.save:
 			saver.save( sess, FLAGS.save_path + FLAGS.save_name )
@@ -157,15 +168,15 @@ def train_neural_network( x ):
 		correct  = tf.equal( tf.argmax( prediction, 1 ), tf.argmax( y, 1 ) )
 		accuracy = tf.reduce_mean( tf.cast( correct, 'float' ) )
 
-		print( "Accuracy: %.1f\n" %( accuracy.eval( { x: song_test_x, \
-		                                              y: song_test_y } * 100 ) )
+		print( "Accuracy: %.1f\n" \
+			   %( accuracy.eval( { x: song_test_x, \
+			   	                   y: song_test_y } ) * 100 ) )
 		
 if __name__ == "__main__":
 
 	features = []
 
 	if os.path.isdir( FLAGS.data_path + "features/" ):
-
 		features.extend( glob( "%s/*.npy" %( FLAGS.data_path + "features/" ) ) )
 
 	if not len( features ):
@@ -177,24 +188,30 @@ if __name__ == "__main__":
 
 			if not os.path.isfile( FLAGS.data_path + "labels/" + \
 				                   name.split('/')[-1] ):
-
 				raise LookupError( "Can not find labels for" + \
 				                   name.split('/')[-1] )
 
 	if FLAGS.self_test:
-
 		num_train = len( features )
 
-	else:
+	elif not FLAGS.train:
+		num_train = 0
 
+	else:
 		num_train = floor( FLAGS.train_rate * len( features ) )
 
 	print( "Total %i songs found, will use %i songs for training.\n" \
 		   %( len( features ), num_train ) + \
 	       "Train rate: %.1f%%\n" %( 100 * num_train / len( features ) ) )
 
-	song_x = np.load( features[0] )
-	song_y = np.load( FLAGS.data_path + "labels/" + features[0].split('/')[-1] )
+	if FLAGS.train:
+		song_x = np.load( features[0] )
+		song_y = np.load( FLAGS.data_path + "labels/" + \
+			              features[0].split('/')[-1] )
+
+	else:
+		song_x = None
+		song_y = None
 
 	for i in range( 1, num_train ):
 
@@ -203,32 +220,34 @@ if __name__ == "__main__":
 			                                   features[i].split('/')[-1] ) ) )
 
 	if FLAGS.self_test:
-
 		num_train = 0
 
 	for i in range( num_train, len( features ) ):
 
 		if i == num_train:
-
 			song_test_x = np.load( features[i] )
 			song_test_y = np.load( FLAGS.data_path + "labels/" + \
 				                   features[i].split('/')[-1] )
 		else:
-
 			song_test_x = np.vstack( ( song_test_x, np.load( features[i] ) ) )
 			song_test_y = np.vstack( ( song_test_y, \
 				                       np.load( FLAGS.data_path + "labels/" + \
 				                                features[i].split('/')[-1] ) ) )
 	# Train first 3 songs, test first 3 songs
 	# 3 hl, 100 nd, 100 batch, 100 epoch
-	input_nodes  = song_x.shape[1]
+
+	if FLAGS.train:
+		input_nodes  = song_x.shape[1]
+		hm_epochs    = 100
+
+	else:
+		input_nodes  = song_test_x.shape[1]
+		hm_epochs    = 0
+
 	layer_levels = 3
 	n_classes    = 51
 	layer_nodes  = [ 100 ] * layer_levels
 	batch_size   = 100
-	hm_epochs    = 100
-
-	print(song_x.shape)
 
 	print( "Number of hidden layers: %i\n" %layer_levels + \
 	       "Number of nodes in hidden layer: \n%s\n" %layer_nodes + \
