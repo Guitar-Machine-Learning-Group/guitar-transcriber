@@ -87,10 +87,13 @@ def train_recurrent_neural_network( x ):
 
 		if FLAGS.load:
 			new_saver = tf.train.get_checkpoint_state( FLAGS.load_path )
+
 			if new_saver and new_saver.model_checkpoint_path:
 				saver.restore( sess, new_saver.model_checkpoint_path )
 				print( "Model successfully load from '" + FLAGS.load_path + \
 					   "'" + " file '" + FLAGS.load_name + "'\n" )
+			else:
+				print( "Model cannot find. No model loaded." )
 
 		if FLAGS.train:
 			print("-----------------------------")
@@ -146,6 +149,9 @@ def train_recurrent_neural_network( x ):
 			print()
 
 		if FLAGS.save:
+			if not os.path.exists( FLAGS.save_path ):
+				os.makedirs( FLAGS.save_path )
+
 			saver.save( sess, FLAGS.save_path + FLAGS.save_name )
 			print( "Model successfully saved in '" + FLAGS.save_path + "'" + \
 			       " as '" + FLAGS.save_name + "'\n" )
