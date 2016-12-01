@@ -1,91 +1,79 @@
-import tensorflow as tf
-from tensorflow.examples.tutorials.mnist import input_data
+# 8 - RNN Classifier example
 
-# this is data
-mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
+import os
+os.environ['KERAS_BACKEND']='tensorflow'
 
-# hyperparameters
-lr = 0.001
-training_iters = 100000
-batch_size = 128
-#display_step = 10
+import numpy as np
+np.random.seed(1337)  # for reproducibility
 
-n_inputs = 28
-n_steps = 28
-n_hidden_units = 128
-n_classes = 51
+from keras.datasets import mnist
+from keras.utils import np_utils
+from keras.models import Sequential
+from keras.layers import SimpleRNN, Activation, Dense
+from keras.optimizers import Adam
 
-#tf Graph input
-x = tf.placeholder(tf.float32, [None, n_steps, n_inputs])
-y = tf.placeholder(tf.float32, [None, n_classes])
+x = np.load("3doorsdown_herewithoutyou_features.npy")
+y = np.load("3doorsdown_herewithoutyou_labels.npy")
 
-#Define weights
-weights = {
-        # (28, 128)
-        'in' : tf.Variable(tf.random_normal([n_inputs, n_hidden_units])),
-        # (128, 10)
-        'out' : tf.Variable(tf.random_normal([n_hidden_units, n_classes]))
-        }
-biases = {
-        # (128,)
-        'in' : tf.Variable(tf.constant(0.1, shape=[n_hidden_units, ])),
-        # (10,)
-        'out' : tf.Variable(tf.constant(0.1, shape=[n_classes, ]))
-        }
+TIME_STEPS = 1
+INPUT_SIZE = x.shape[1]
+BATCH_SIZE = 100
+BATCH_INDEX = 0
+OUTPUT_SIZE = 51
+CELL_SIZE = 128
+LR = 0.00001
 
-def RNN(X, weight, biases):
-    # hidden layer for input to cell
-    # X (128 batch, 28 step, 28 inputs)
-    # ==> (128*28, 28 inputs)
-    X = tf.reshape(X, [-1, n_inputs])
-    # X_in ==> (128 batch * 28 steps, 128 hidden)
-    X_in = tf.matmul(X, weights['in']) + biases['in']
-    # X_in ==> (128 batch, 28 steps, 128 hidden)
-    X_in = tf.reshape(X_in, [-1, n_steps, n_hidden_units])
+X_train = x
+y_train = y.astype(int)
+X_test = x
+y_test = y.astype(int)
+# print(y_test[0])
 
 
-    # cell
-    lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(n_hidden_units, forget_bias=1.0, state_is_tuple=True)
-    # lstm cell is divided into two parts (c_state, m_state)
-    _init_state = lstm_cell.zero_state(batch_size, dtype=tf.float32)
-    outputs, states = tf.nn.dynamic_rnn(lstm_cell, X_in, initial_state=_init_state, time_major=False)
+# data pre-processing
+X_train = X_train.reshape(-1, TIME_STEPS, INPUT_SIZE) # normalize
+print(len(X_train))
+X_test = X_test.reshape(-1, TIME_STEPS, INPUT_SIZE) # normalize
+y_train = np_utils.to_categorical(y_train, nb_classes=OUTPUT_SIZE)
+y_test = np_utils.to_categorical(y_test, nb_classes=OUTPUT_SIZE)
+
+# build RNN model
+model = Sequential()
+
+# RNN cell
+model.add(SimpleRNN(
+    # for batch_input_shape, if using tensorflow as the backend, we have to put None for the batch_size.
+    # Otherwise, model.evaluate() will get error.
+    batch_input_shape=(None, TIME_STEPS, INPUT_SIZE),       # Or: input_dim=INPUT_SIZE, input_length=TIME_STEPS,
+    output_dim=CELL_SIZE,
+    unroll=True,
+))
+
+# output layer
+model.add(Dense(OUTPUT_SIZE))
+model.add(Activation('softmax'))
+
+# optimizer
+adam = Adam(LR)
+model.compile(optimizer=adam,
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
+
+# training
+for step in range(40010):
+    # data shape = (batch_num, steps, inputs/outputs)
+    X_batch = X_train[BATCH_INDEX: BATCH_INDEX+BATCH_SIZE, :, :]
+    # print(X_batch)
+    Y_batch = y_train[BATCH_INDEX: BATCH_INDEX+BATCH_SIZE, :]
+    # print(Y_batch)
+    cost = model.train_on_batch(X_batch, Y_batch)
+    BATCH_INDEX += BATCH_SIZE
+    BATCH_INDEX = 0 if BATCH_INDEX >= X_train.shape[0] else BATCH_INDEX
+
+    if step % 500 == 0:
+        cost, accuracy = model.evaluate(X_test, y_test, batch_size=y_test.shape[0], verbose=False)
+        print('test cost: ', cost, 'test accuracy: ', accuracy)
 
 
 
-    # hidden layer for output as the final results
-    # results = tf.matmul(states[1], weights['out']) + biases['out']
 
-    # or
-    # unpack to list [(batch, outputs)..] * steps
-    outputs = tf.unpack(tf.transpose(outputs, [1, 0, 2]))
-    results = tf.matmul(outputs[-1], weights['out']) + biases['out']
-
-
-    #results = None
-    return results
-
-
-pred = RNN(x, weights, biases)
-cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))
-train_op = tf.train.AdamOptimizer(lr).minimize(cost)
-
-correct_pred = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
-accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
-
-init = tf.global_variables_initializer()
-with tf.Session() as sess:
-    sess.run(init)
-    step = 0
-    while step * batch_size < training_iters:
-        batch_xs, batch_ys = mnist.train.next_batch(batch_size)
-        batch_xs = batch_xs.reshape([batch_size, n_steps, n_inputs])
-        sess.run([train_op], feed_dict = {
-            x: batch_xs,
-            y: batch_ys
-            })
-        if step % 20 == 0:
-            print(sess.run(accuracy, feed_dict = {
-                x: batch_xs,
-                y: batch_ys,
-                }))
-        step += 1

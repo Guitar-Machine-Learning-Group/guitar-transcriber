@@ -98,8 +98,15 @@ class FeatureExtractor(object):
             amplitude = np.sqrt( np.power( Y.real, 2 ) + np.power( Y.imag, 2 ) )
 
             s.X = amplitude
+<<<<<<< HEAD
             # print (len(s.X[0]))
             np.save( "%s.npy" %s.audio_path.split('/')[-1].split('.')[0], s.X )
+=======
+
+            np.save( "%s_features.npy" \
+                %s.audio_path.split('/')[-1].split('.')[0], s.X )
+            
+>>>>>>> b06daaf5df0a04313303bccb6b9d636f9742293d
 
             # update progress bar
             self._speak('\rextracting features: %d%%' % int((i+1)/num_songs * 100))
@@ -192,6 +199,9 @@ class FeatureExtractor(object):
                 # rwows are binary vectors, where a 1 indicates the presence of MIDI number
                 pitch_indicators = np.unique(nmat[nidx,0]).astype(np.uint32) - self.pitch_offset
                 s.Y[iwin, pitch_indicators] = 1.0
+
+            np.save( "%s_labels.npy" \
+                %s.audio_path.split('/')[-1].split('.')[0], s.Y )
 
             self._speak('\rextracting labels: %d%%' % int((i+1)/num_songs * 100))
         self._speak('\n')
