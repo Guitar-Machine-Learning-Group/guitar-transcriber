@@ -16,9 +16,10 @@ try:
 except NameError:
     xrange = range
 
+
 class FeatureExtractor(object):
     """
-    For each audio file, extract features for each window and 
+    For each audio file, extract features for each window and
     extract the corresponding pitch labels for each frame.
     """
 
@@ -49,7 +50,8 @@ class FeatureExtractor(object):
             for audio_format in FeatureExtractor.VALID_AUDIO_FORMATS:
                 audio_files.extend(glob("%s/*.%s" % (audio_path, audio_format)))
         if not len(audio_files):
-            raise LookupError("Can not find any audio files (%s) to process" % ", ".join(FeatureExtractor.VALID_AUDIO_FORMATS))
+            raise LookupError(
+                "Can not find any audio files (%s) to process" % ", ".join(FeatureExtractor.VALID_AUDIO_FORMATS))
 
         self.dataset = Dataset()
         for audio_file in audio_files:
@@ -77,41 +79,40 @@ class FeatureExtractor(object):
         num_songs = self.dataset.size
         for i, s in enumerate(self.dataset.songs()):
             s.x, _ = librosa.load(s.audio_path, sr=self.sampling_rate, mono=True)
-              
+
             """
             TODO: calculate your audio features here
             You can use librosa to calculate the audio features you want to use.
-            If you want to calculate your own features, you can slice the audio 
+            If you want to calculate your own features, you can slice the audio
             samples into frames using librosa.util.frame(s.x, frame_length=self.
-            window_size, hop_length=self.hop_size) and then calculate your 
+            window_size, hop_length=self.hop_size) and then calculate your
             features for each frame of audio samples.
             # In the end, you'll have s.X = [window_index, feature_index]
 
             For now, your audio features are simply the windowed samples of the song. It won't work for pitch detection.
             """
             s.X = librosa.util.frame(s.x, frame_length=self.window_size, hop_length=self.hop_size)
-            s.X = np.transpose( s.X )
+            s.X = np.transpose(s.X)
 
-            Y    = np.fft.fft( s.X )
+            Y = np.fft.fft(s.X)
 
-            freq = np.fft.fftfreq( self.window_size, 1 / self.sampling_rate )
-                
-            amplitude = np.sqrt( np.power( Y.real, 2 ) + np.power( Y.imag, 2 ) )
+            freq = np.fft.fftfreq(self.window_size, 1 / self.sampling_rate)
+
+            amplitude = np.sqrt(np.power(Y.real, 2) + np.power(Y.imag, 2))
 
             s.X = amplitude
 
-            np.save( "./preprocess/features/%s.npy" \
-                %s.audio_path.split('/')[-1].split('.')[0], s.X )
-            
+            np.save("./preprocess/features/%s.npy" \
+                    % s.audio_path.split('/')[-1].split('.')[0], s.X)
 
             # update progress bar
-            self._speak('\rextracting features: %d%%' % int((i+1)/num_songs * 100))
+            self._speak('\rextracting features: %d%%' % int((i + 1) / num_songs * 100))
 
         self._speak('\n')
 
         '''
             Changes start here
-        
+
 
         print( len(s.X) )
         print( len(s.X[0]) )
@@ -124,7 +125,7 @@ class FeatureExtractor(object):
 
             fig = plt.figure(1,figsize=(14,7))
             fig.canvas.set_window_title('Window '+str(i))
-            
+
             plt.subplot(211)
             plt.xlabel('time')
             plt.ylabel('amptitude')
@@ -132,7 +133,7 @@ class FeatureExtractor(object):
             plt.axis([0, self.window_size/self.sampling_rate, -1, 1])
             plt.plot(x,y)
             #plt.show()
-            
+
             # perform fft
             sp = np.fft.fft(window)
             freq = np.fft.fftfreq(self.window_size,1/self.sampling_rate)
@@ -141,7 +142,7 @@ class FeatureExtractor(object):
             print( freq )
             print( len(sp.real) )
             print( (sp.real) )
-            
+
             plt.subplot(212)
             plt.xlabel('frequency')
             plt.ylabel('amptitude')
@@ -153,8 +154,8 @@ class FeatureExtractor(object):
 
             plt.tight_layout()
             plt.show()
-            
-        
+
+
             Changes end here
         '''
 
@@ -172,7 +173,8 @@ class FeatureExtractor(object):
 
             num_wins = np.shape(s.X)[0]
             midiio = MidiIO(s.label_path)
-            note_events = midiio.parse_midi(pitch_low_passband=self.pitch_offset, pitch_high_passband=(self.pitch_offset+self.num_pitches-1))
+            note_events = midiio.parse_midi(pitch_low_passband=self.pitch_offset,
+                                            pitch_high_passband=(self.pitch_offset + self.num_pitches - 1))
             nmat = np.array([[float(n.midi_number), n.onset_ts, n.offset_ts] for n in note_events], dtype=np.float32)
 
             # the label matrix is an indicator vector indicating the presence of a pitch
@@ -180,25 +182,25 @@ class FeatureExtractor(object):
 
             for iwin in xrange(num_wins):
                 # calculate window start and end times (s)
-                w_start = iwin*self.hop_size/self.sampling_rate
-                w_end = (iwin*self.hop_size + self.window_size)/self.sampling_rate
+                w_start = iwin * self.hop_size / self.sampling_rate
+                w_end = (iwin * self.hop_size + self.window_size) / self.sampling_rate
 
                 # logic to find note indices that sound during the current analysis window
                 nidx = np.nonzero(np.logical_or(np.logical_or(
-                    np.logical_and(nmat[:,1] < w_start, nmat[:,2] > w_end),
-                    np.logical_and(nmat[:,1] > w_start, nmat[:,1] < w_end)),
-                    np.logical_and(nmat[:,2] > w_start, nmat[:,2] < w_end)))[0]
+                    np.logical_and(nmat[:, 1] < w_start, nmat[:, 2] > w_end),
+                    np.logical_and(nmat[:, 1] > w_start, nmat[:, 1] < w_end)),
+                    np.logical_and(nmat[:, 2] > w_start, nmat[:, 2] < w_end)))[0]
 
                 # populate pitch indicators in label matrix
                 # label matrix is [num_wins x num_pitches] where num_pitches is number of pitches capable of being produced by the instrument
                 # rwows are binary vectors, where a 1 indicates the presence of MIDI number
-                pitch_indicators = np.unique(nmat[nidx,0]).astype(np.uint32) - self.pitch_offset
+                pitch_indicators = np.unique(nmat[nidx, 0]).astype(np.uint32) - self.pitch_offset
                 s.Y[iwin, pitch_indicators] = 1.0
 
-            np.save( "./preprocess/labels/%s.npy" \
-                %s.audio_path.split('/')[-1].split('.')[0], s.Y )
+            np.save("./preprocess/labels/%s.npy" \
+                    % s.audio_path.split('/')[-1].split('.')[0], s.Y)
 
-            self._speak('\rextracting labels: %d%%' % int((i+1)/num_songs * 100))
+            self._speak('\rextracting labels: %d%%' % int((i + 1) / num_songs * 100))
 
         self._speak('\n')
 
