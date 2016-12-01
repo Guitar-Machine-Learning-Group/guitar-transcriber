@@ -142,7 +142,7 @@ class FeatureExtractor(object):
                 """
 
                 # store the calculated features
-                feature_matrix[i,:] = np.absolute(sp.real)
+                feature_matrix[win_i,:] = np.absolute(sp.real)
 
             # pass the calculated feature to s.x
             s.X = feature_matrix
