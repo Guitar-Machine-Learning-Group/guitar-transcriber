@@ -244,7 +244,7 @@ if __name__ == "__main__":
 
 	if FLAGS.train:
 		input_nodes  = song_x.shape[1]
-		hm_epochs    = 100
+		hm_epochs    = 15
 
 	else:
 		input_nodes  = song_test_x.shape[1]
