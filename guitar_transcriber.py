@@ -1,5 +1,5 @@
 from fextract import FeatureExtractor
-
+import numpy as np
 
 class GuitarTranscriber(object):
     """
@@ -30,6 +30,8 @@ class GuitarTranscriber(object):
         s.X is a matrix of floats of size [num_audio_windows, feature_dimensionality]
         s.Y is a matrix of binary digits of size [num_audio_windows, num_pitches=51]
         """
+        self.X = None
+        self.Y = None
 
         for s in fe.dataset.songs():
             #"""
@@ -38,10 +40,14 @@ class GuitarTranscriber(object):
             #print("Y_num_wins (should equal to X_num_wins):",len(s.Y),"Y_win_size(should be 51):",len(s.Y[0]))
             #"""
 
-            self.X = s.X
-            self.Y = s.Y
-            #print(s.X)
-            pass
+            if (self.X==None):
+                self.X = s.X
+                self.Y = s.Y
+            else:
+                self.X = np.append(self.X, s.X, axis=0)
+                self.Y = np.append(self.Y, s.Y, axis=0)
+            #print(len(self.X))
+            #pass
 
 if __name__ == "__main__":
     audio_path = './audio'
