@@ -189,14 +189,20 @@ if __name__ == "__main__":
 	if not len( features ):
 		raise LookupError( "Can not find any feature data to process" )
 
+        if os.name == 'nt':
+            split_symbol = '\'
+
+        else:
+            split_symbol = '/'
+
 	if FLAGS.labels:
 
 		for name in features:
 
 			if not os.path.isfile( FLAGS.data_path + "labels/" + \
-				                   name.split('/')[-1] ):
+				                   name.split( split_symbol )[-1] ):
 				raise LookupError( "Can not find labels for " + \
-				                   name.split('/')[-1] )
+				                   name.split( split_symbol )[-1] )
 
 	random.shuffle( features )
 
@@ -216,7 +222,7 @@ if __name__ == "__main__":
 	if FLAGS.train:
 		song_x = np.load( features[0] )
 		song_y = np.load( FLAGS.data_path + "labels/" + \
-			              features[0].split('/')[-1] )
+			              features[0].split( split_symbol )[-1] )
 
 	else:
 		song_x = None
@@ -226,7 +232,7 @@ if __name__ == "__main__":
 
 		song_x = np.vstack( ( song_x, np.load( features[i] ) ) )
 		song_y = np.vstack( ( song_y, np.load( FLAGS.data_path + "labels/" + \
-			                                   features[i].split('/')[-1] ) ) )
+			                               features[i].split( split_symbol )[-1] ) ) )
 
 	if FLAGS.self_test:
 		num_train = 0
@@ -236,12 +242,12 @@ if __name__ == "__main__":
 		if i == num_train:
 			song_test_x = np.load( features[i] )
 			song_test_y = np.load( FLAGS.data_path + "labels/" + \
-				                   features[i].split('/')[-1] )
+				                   features[i].split( split_symbol )[-1] )
 		else:
 			song_test_x = np.vstack( ( song_test_x, np.load( features[i] ) ) )
 			song_test_y = np.vstack( ( song_test_y, \
 				                       np.load( FLAGS.data_path + "labels/" + \
-				                                features[i].split('/')[-1] ) ) )
+				                       features[i].split( split_symbol )[-1] ) ) )
 	# Train first 3 songs, test first 3 songs
 	# 3 hl, 100 nd, 100 batch, 100 epoch
 
