@@ -24,7 +24,25 @@ backpropagation
 
 feed forward + backprop = epoch
 '''
+'''
+skyu0221@guitar-3:~/guitar-transcriber$ python3 rnn.py --save=True
+Total 44 songs found, will use 35 songs for training.
+Train rate: 79.5%
 
+RNN size:         64
+Chunk size:       2048
+Number of chunks: 1
+Batch size:       64
+Number of epochs: 15
+
+Epoch 15 completed out of 15 (100.0%), loss: 54.568140
+Estimate time remains: 0h 0m 0s
+Already spent:         0h 4m 50s
+
+Model successfully saved in './models/recurrent-neural-network/' as 'rnn-model'
+
+Accuracy: 59.7
+'''
 flags = tf.flags
 logging = tf.logging
 
@@ -247,7 +265,7 @@ if __name__ == "__main__":
 		hm_epochs    = 0
 
 	n_classes   = 51
-	rnn_size    = 128
+	rnn_size    = 64
 	batch_size  = 64
 	n_chunks    = 1
 
