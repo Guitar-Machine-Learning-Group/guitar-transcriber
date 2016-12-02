@@ -78,34 +78,36 @@ def conv2d( x, w ):
 
 def maxpool2d( x ):
 
-	return tf.nn.max_pool( x, ksize = [ 1, 8, 1, 1 ], \
-		                    strides = [ 1, 8, 1, 1 ], padding = 'SAME' )
+	return tf.nn.max_pool( x, ksize = [ 1, 8, 8, 1 ], \
+		                    strides = [ 1, 8, 8, 1 ], padding = 'SAME' )
 
 def convolutional_neural_network_model( x ):
 
 	weights = { \
-	    'w_conv1': tf.Variable( tf.random_normal( [ 2, 2, 1, 4 ] ) ), \
-	    'w_conv2': tf.Variable( tf.random_normal( [ 2, 2, 1, 8 ] ) ), \
-	    'w_fc':    tf.Variable( tf.random_normal( [ 8, 1 ] ) ), \
-	    'out':     tf.Variable( tf.random_normal( [ 1, n_classes ] ) ) }
+	    'w_conv1': tf.Variable( tf.random_normal( [ 5, 5, 1, 32 ] ) ), \
+	    'w_conv2': tf.Variable( tf.random_normal( [ 5, 5, 32, 64 ] ) ), \
+	    'w_fc':    tf.Variable( tf.random_normal( [ 32*32*64, 1024 ] ) ), \
+	    'out':     tf.Variable( tf.random_normal( [ 1024, n_classes ] ) ) }
 
 	biases  = { \
 	    'b_conv1': tf.Variable( tf.random_normal( [ 32 ] ) ), \
 	    'b_conv2': tf.Variable( tf.random_normal( [ 64 ] ) ), \
-	    'b_fc':    tf.Variable( tf.random_normal( [ 1 ] ) ), \
+	    'b_fc':    tf.Variable( tf.random_normal( [ 1024 ] ) ), \
 	    'out':     tf.Variable( tf.random_normal( [ n_classes ] ) ) }
 
-	x = tf.reshape( x, shape = [ -1, 2048, 1, 1 ] )
+	x = tf.reshape( x, shape = [ -1, 2048, 2048, 1 ] )
 
-	conv1 = conv2d( x, weights[ 'w_conv1' ] )
+	conv1 = tf.nn.relu( conv2d( x, weights[ 'w_conv1' ] ) + \
+		                biases[ 'b_conv1' ] )
 	conv1 = maxpool2d( conv1 )
 
-	conv2 = conv2d( conv1, weights[ 'w_conv2' ] )
+	conv2 = tf.nn.relu( conv2d( conv1, weights[ 'w_conv2' ] ) + \
+		                biases[ 'b_conv2'] )
 	conv2 = maxpool2d( conv2 )
 
-	fc     = tf.reshape( conv2, [ -1, 2048 ] )
+	fc     = tf.reshape( conv2, [ -1, 32*32*64 ] )
 	fc     = tf.nn.relu( tf.matmul( fc, weights[ 'w_fc' ] ) + \
-		                             biases[ 'b_fc' ] )
+		                 biases[ 'b_fc' ] )
 	fc     = tf.nn.dropout( fc, keep_rate )
 
 	output = tf.matmul( fc, weights[ 'out' ] ) + biases[ 'out' ]
@@ -151,10 +153,15 @@ def train_convolutional_neural_network( x ):
 
 			while idx < song_x.shape[0]:
 
-				start       = idx
-				end         = idx + batch_size
+				start = idx
+				end   = idx + batch_size
 
-				batch_x     = np.array( song_x[start:end] )
+				if end > song_x.shape[0]:
+					start = song_x.shape[0] - batch_size
+					end   = song_x.shape[0]
+
+				batch_x     = np.transpose( np.array( song_x[start:end] ) )
+				batch_x     = batch_x.reshape( [ 1, -1 ] )
 				batch_y     = np.array( song_y[start:end] )
 
 				_, c        = sess.run( [ optimizer, cost ], \
@@ -249,7 +256,7 @@ if __name__ == "__main__":
 
 		song_x = np.vstack( ( song_x, np.load( features[i] ) ) )
 		song_y = np.vstack( ( song_y, np.load( FLAGS.data_path + "labels/" + \
-			                               features[i].split( split_symbol )[-1] ) ) )
+			                         features[i].split( split_symbol )[-1] ) ) )
 
 	if FLAGS.self_test:
 		num_train = 0
@@ -264,7 +271,7 @@ if __name__ == "__main__":
 			song_test_x = np.vstack( ( song_test_x, np.load( features[i] ) ) )
 			song_test_y = np.vstack( ( song_test_y, \
 				                       np.load( FLAGS.data_path + "labels/" + \
-				                       features[i].split( split_symbol )[-1] ) ) )
+				                     features[i].split( split_symbol )[-1] ) ) )
 	# Train first 3 songs, test first 3 songs
 	# 3 hl, 100 nd, 100 batch, 100 epoch
 
@@ -277,7 +284,7 @@ if __name__ == "__main__":
 		hm_epochs    = 0
 
 	n_classes    = 51
-	batch_size   = 64
+	batch_size   = 2048
 	keep_rate    = 0.8
 	layer_levels = 2
 
@@ -285,7 +292,7 @@ if __name__ == "__main__":
 	       "Batch size:              %i\n" %batch_size + \
 	       "Number of epochs:        %i\n" %hm_epochs )
 
-	x         = tf.placeholder( 'float', [ None, input_nodes ] )
+	x         = tf.placeholder( 'float', [ None, input_nodes * batch_size ] )
 	y         = tf.placeholder( 'float' )
 	keep_prob = tf.placeholder( tf.float32 )
 
