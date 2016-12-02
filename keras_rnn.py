@@ -36,6 +36,8 @@ if __name__ == "__main__":
     # compile 
     model.compile(loss='categorical_crossentropy', optimizer='rmsprop',metrics=['accuracy'])
     
+    #model.compile(loss='categorical_crossentropy', optimizer='rmsprop',metrics=['fmeasure'])   #built in fmeasure
+    
     # train
     epochs = 20
     #print(gt.X.shape[1])
@@ -44,6 +46,9 @@ if __name__ == "__main__":
     #print(X)
     #Y = np.array(gt.Y).reshape((1,inputLen,51))
     model.fit(X, gt.Y, batch_size=128, nb_epoch=epochs)
+    
+    #loss_and_metrics = model.evaluate(X_test, y_test, batch_size=128)   # choose whatever test set here
+    #print("loss_and_metrics") #loss and fmeasure
     
     # predict
     y = model.predict(X)
