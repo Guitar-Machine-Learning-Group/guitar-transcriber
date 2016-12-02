@@ -119,7 +119,17 @@ if __name__ == "__main__":
 
 	# setup HMM state transition probability
 	trans_prob = np.ones((2,2))
+	trans_amount = np.zeros((2,2))
 	# setup HMM emission probability
 	num_state  = len(np.vstack({tuple(row) for row in l}))
 	emi_prob = np.ones((2,2))
+
+	# get the statistical data
+	# simple hmm only see the first feature and the first pitch
+	for s_i in range(len(s_X)):
+		trans_prob[int(s_X[s_i][0]),int(l[s_i][0])] += 1
+
+	trans_prob = trans_prob/(len(s_X) + 4)
+	print(len(s_X))
+	print(trans_prob)
 
