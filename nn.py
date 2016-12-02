@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import os
 import sys
+import random
 import numpy as np
 import tensorflow as tf
 
@@ -22,8 +23,27 @@ optimization function (optimizer) > minimize cost (AdamOptimizer..SGD..AdaGrad)
 backpropagation
 
 feed forward + backprop = epoch
-'''
 
+Result around 50%
+
+skyu0221@guitar-vmware:~/guitar-transcriber$ python3 nn.py --save=True
+Total 44 songs found, will use 35 songs for training.
+Train rate: 79.5%
+
+Number of hidden layers: 3
+Number of nodes in hidden layer: 
+[100, 100, 100]
+Batch size:              200
+Number of epochs:        15
+
+Epoch 15 completed out of 15 (100.0%), loss: 29090.942720
+Estimate time remains: 0h 0m 0s
+Already spent:         0h 1m 6s
+
+Model successfully saved in './models/neural-network/' as 'nn-model'
+
+Accuracy: 59.6
+'''
 flags = tf.flags
 logging = tf.logging
 
@@ -188,14 +208,22 @@ if __name__ == "__main__":
 	if not len( features ):
 		raise LookupError( "Can not find any feature data to process" )
 
+	if os.name == 'nt':
+		split_symbol = '\\'
+
+	else:
+		split_symbol = "/"
+
 	if FLAGS.labels:
 
 		for name in features:
 
 			if not os.path.isfile( FLAGS.data_path + "labels/" + \
-				                   name.split('/')[-1] ):
-				raise LookupError( "Can not find labels for" + \
-				                   name.split('/')[-1] )
+				                   name.split( split_symbol )[-1] ):
+				raise LookupError( "Can not find labels for " + \
+				                   name.split( split_symbol )[-1] )
+
+	random.shuffle( features )
 
 	if FLAGS.self_test:
 		num_train = len( features )
@@ -213,7 +241,7 @@ if __name__ == "__main__":
 	if FLAGS.train:
 		song_x = np.load( features[0] )
 		song_y = np.load( FLAGS.data_path + "labels/" + \
-			              features[0].split('/')[-1] )
+			              features[0].split( split_symbol )[-1] )
 
 	else:
 		song_x = None
@@ -223,7 +251,7 @@ if __name__ == "__main__":
 
 		song_x = np.vstack( ( song_x, np.load( features[i] ) ) )
 		song_y = np.vstack( ( song_y, np.load( FLAGS.data_path + "labels/" + \
-			                                   features[i].split('/')[-1] ) ) )
+			                               features[i].split( split_symbol )[-1] ) ) )
 
 	if FLAGS.self_test:
 		num_train = 0
@@ -233,12 +261,12 @@ if __name__ == "__main__":
 		if i == num_train:
 			song_test_x = np.load( features[i] )
 			song_test_y = np.load( FLAGS.data_path + "labels/" + \
-				                   features[i].split('/')[-1] )
+				                   features[i].split( split_symbol )[-1] )
 		else:
 			song_test_x = np.vstack( ( song_test_x, np.load( features[i] ) ) )
 			song_test_y = np.vstack( ( song_test_y, \
 				                       np.load( FLAGS.data_path + "labels/" + \
-				                                features[i].split('/')[-1] ) ) )
+				                       features[i].split( split_symbol )[-1] ) ) )
 	# Train first 3 songs, test first 3 songs
 	# 3 hl, 100 nd, 100 batch, 100 epoch
 
@@ -253,7 +281,7 @@ if __name__ == "__main__":
 	layer_levels = 3
 	n_classes    = 51
 	layer_nodes  = [ 100 ] * layer_levels
-	batch_size   = 100
+	batch_size   = 200
 
 	print( "Number of hidden layers: %i\n" %layer_levels + \
 	       "Number of nodes in hidden layer: \n%s\n" %layer_nodes + \

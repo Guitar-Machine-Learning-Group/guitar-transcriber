@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import os
 import sys
+import random
 import numpy as np
 import tensorflow as tf
 
@@ -23,7 +24,25 @@ backpropagation
 
 feed forward + backprop = epoch
 '''
+'''
+skyu0221@guitar-3:~/guitar-transcriber$ python3 rnn.py --save=True
+Total 44 songs found, will use 35 songs for training.
+Train rate: 79.5%
 
+RNN size:         64
+Chunk size:       2048
+Number of chunks: 1
+Batch size:       64
+Number of epochs: 15
+
+Epoch 15 completed out of 15 (100.0%), loss: 54.568140
+Estimate time remains: 0h 0m 0s
+Already spent:         0h 4m 50s
+
+Model successfully saved in './models/recurrent-neural-network/' as 'rnn-model'
+
+Accuracy: 59.7
+'''
 flags = tf.flags
 logging = tf.logging
 
@@ -173,14 +192,22 @@ if __name__ == "__main__":
 	if not len( features ):
 		raise LookupError( "Can not find any feature data to process" )
 
+	if os.name == 'nt':
+		split_symbol = '\\'
+
+	else:
+		split_symbol = '/'
+
 	if FLAGS.labels:
 
 		for name in features:
 
 			if not os.path.isfile( FLAGS.data_path + "labels/" + \
-				                   name.split('/')[-1] ):
-				raise LookupError( "Can not find labels for" + \
-				                   name.split('/')[-1] )
+				                   name.split( split_symbol )[-1] ):
+				raise LookupError( "Can not find labels for " + \
+				                   name.split( split_symbol )[-1] )
+
+	random.shuffle( features )
 
 	if FLAGS.self_test:
 		num_train = len( features )
@@ -198,7 +225,7 @@ if __name__ == "__main__":
 	if FLAGS.train:
 		song_x = np.load( features[0] )
 		song_y = np.load( FLAGS.data_path + "labels/" + \
-			              features[0].split('/')[-1] )
+			              features[0].split( split_symbol )[-1] )
 
 	else:
 		song_x = None
@@ -208,7 +235,7 @@ if __name__ == "__main__":
 
 		song_x = np.vstack( ( song_x, np.load( features[i] ) ) )
 		song_y = np.vstack( ( song_y, np.load( FLAGS.data_path + "labels/" + \
-			                                   features[i].split('/')[-1] ) ) )
+                                                       features[i].split( split_symbol )[-1] ) ) )
 
 	if FLAGS.self_test:
 		num_train = 0
@@ -218,19 +245,19 @@ if __name__ == "__main__":
 		if i == num_train:
 			song_test_x = np.load( features[i] )
 			song_test_y = np.load( FLAGS.data_path + "labels/" + \
-				                   features[i].split('/')[-1] )
+				                   features[i].split( split_symbol )[-1] )
 		else:
 			song_test_x = np.vstack( ( song_test_x, np.load( features[i] ) ) )
 			song_test_y = np.vstack( ( song_test_y, \
 				                       np.load( FLAGS.data_path + "labels/" + \
-				                                features[i].split('/')[-1] ) ) )
+				                       features[i].split( split_symbol )[-1] ) ) )
 	# Train first 3 songs, test first 3 songs
 	# 3 hl, 100 nd, 100 batch, 100 epoch
 
 	if FLAGS.train:
 		input_nodes  = song_x.shape[1]
 		chunk_size   = song_x.shape[1]
-		hm_epochs    = 10
+		hm_epochs    = 15
 
 	else:
 		input_nodes  = song_test_x.shape[1]
@@ -238,8 +265,8 @@ if __name__ == "__main__":
 		hm_epochs    = 0
 
 	n_classes   = 51
-	rnn_size    = 128
-	batch_size  = 128
+	rnn_size    = 64
+	batch_size  = 64
 	n_chunks    = 1
 
 	print( "RNN size:         %i\n" %rnn_size + \
