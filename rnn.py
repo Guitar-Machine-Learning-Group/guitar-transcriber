@@ -247,8 +247,8 @@ if __name__ == "__main__":
 		hm_epochs    = 0
 
 	n_classes   = 51
-	rnn_size    = 256
-	batch_size  = 128
+	rnn_size    = 128
+	batch_size  = 64
 	n_chunks    = 1
 
 	print( "RNN size:         %i\n" %rnn_size + \
