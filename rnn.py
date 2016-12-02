@@ -247,7 +247,7 @@ if __name__ == "__main__":
 		hm_epochs    = 0
 
 	n_classes   = 51
-	rnn_size    = 512
+	rnn_size    = 256
 	batch_size  = 128
 	n_chunks    = 1
 
