@@ -51,6 +51,10 @@ def findStateIndex(state,stateArray):
 
 if __name__ == "__main__":
 
+	'''
+		loading feature prepare (start)
+	'''
+
 	features = []
 
 	if os.path.isdir( FLAGS.data_path + "features/" ):
@@ -74,7 +78,7 @@ if __name__ == "__main__":
 				raise LookupError( "Can not find labels for " + \
 				                   name.split( split_symbol )[-1] )
 
-	#random.shuffle( features )
+	# random.shuffle( features )
 
 	if FLAGS.self_test:
 		num_train = len( features )
@@ -89,9 +93,11 @@ if __name__ == "__main__":
 		   %( len( features ), num_train ) + \
 	       "Train rate: %.1f%%\n" %( 100 * num_train / len( features ) ) )
 
-	# setup HMM transition probability
-	trans_prob = np.ones(2**51,2**51)
-	
+	'''
+		loading feature prepare (end)
+	'''
+
+
 
 	# load feature from files
 	f = np.load(features[0])
@@ -105,9 +111,15 @@ if __name__ == "__main__":
 	# for element in f[0]:
 	# 	print(element)
 	helper_test = l
-	print(f_avg)
-	print(helper_test)
-	print(len(helper_test))
-	print(np.vstack({tuple(row) for row in helper_test}))
-	print(len(np.vstack({tuple(row) for row in helper_test})))
+	# print(f_avg)
+	# print(helper_test)
+	# print(len(helper_test))
+	# print(np.vstack({tuple(row) for row in helper_test}))
+	# print(len(np.vstack({tuple(row) for row in helper_test})))
+
+	# setup HMM state transition probability
+	trans_prob = np.ones((2**51,2**51))
+	# setup HMM emission probability
+	num_state  = len(np.vstack({tuple(row) for row in l}))
+	emi_prob = np.noes((len(f[0]),num_state))
 
