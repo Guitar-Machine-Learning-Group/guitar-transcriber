@@ -79,7 +79,7 @@ if __name__ == "__main__":
             testX = np.append(testX, x)
             testY = np.append(testY, y)
             if count == total - 1:
-                result = test(testX.reshape(-1, 2048), testY.reshape(-1, 2048))
+                result = test(testX.reshape(-1, 2048), testY.reshape(-1, 51))
                 print("score :", result)
         # save_model(s)
     stop = timeit.default_timer()
