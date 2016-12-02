@@ -8,30 +8,11 @@ from sklearn import metrics
 import pickle
 from sklearn.externals import joblib
 
-
-# for filename in glob.glob('./preprocess/features/*', recursive=True):
-#     print(filename)
-# X_train = np.load("./preprocess/features/3doorsdown_herewithoutyou.npy")
-# y_train = np.load("./preprocess/labels/3doorsdown_herewithoutyou.npy")
-#
-# X_test = np.load("./preprocess/features/beatles_blackbird.npy")
-# y_test = np.load("./preprocess/labels/beatles_blackbird.npy")
-#
-# clf = OneVsRestClassifier(SVC(kernel='poly'))
-#
-# clf.fit(X_train, y_train)
-# y_pred = clf.predict(X_test)  # predict on a new X
-# score = metrics.accuracy_score(y_test, y_pred)
-# print ("Accuracy:", score)
-#
-# stop = timeit.default_timer()
-#
-# print ("Time used: %.2f s" % (stop - start))
-
 clf = OneVsRestClassifier(SVC(kernel='poly'))
 try:
     s = joblib.load('svm.pkl')
 except:
+    print("new clf")
     s = clf
 
 parameters = {
@@ -49,7 +30,6 @@ def train(x, y):
 def test(x, y):
     global s
     c = s
-    # y_pred = c.predict(x)
     score = c.score(x, y)
     return score
 
@@ -64,42 +44,43 @@ def load_model():
 if __name__ == "__main__":
     start = timeit.default_timer()
     # pre-load data
-    featureFileList = glob.glob('./preprocess/features/*', recursive=True)
-    labelFileList = glob.glob('./preprocess/labels/*', recursive=True)
-    print (labelFileList)
+    featureFileList = glob.glob('./preprocess1/features/*', recursive=True)
+    labelFileList = glob.glob('./preprocess1/labels/*', recursive=True)
     if len(featureFileList) != len(labelFileList):
         print("Data is not matched")
         exit(-1)
     total = len(labelFileList)
-    trainSize = int(total * 0.8)
-    # trainSize = 1
+    # trainSize = int(total * 0.8)
+    trainSize = 2
     testX = np.array([])
     testY = np.array([])
+    trainX = np.array([])
+    trainY = np.array([])
 
     for count in range(total):
         selector = np.random.randint(0, len(featureFileList))
         featureFileName = featureFileList.pop(selector)
-        # print(count)
-        # print(featureFileName)
+
         for i in range(len(labelFileList)):
-            # print (i)
-            # print(labelFileList[i].split('/')[-1].split('.')[0])
             if labelFileList[i].split('/')[-1].split('.')[0] == featureFileName.split('/')[-1].split('.')[0]:
                 labelFileName = labelFileList.pop(i)
                 break
         x = np.load(featureFileName)
         y = np.load(labelFileName)
-        # print(y)
         if count < trainSize:
-            train(x, y)
-        elif count < total - 1:
+            # train(x, y)
+            # print(x.shape)
+            # print(y.shape)
+            trainX = np.append(trainX, x)
+            trainY = np.append(trainY, y)
+        elif count < total:
+            if count == trainSize:
+                train(trainX.reshape(-1,2048), trainY.reshape(-1, 51))
             testX = np.append(testX, x)
             testY = np.append(testY, y)
-        else:
-            testX = np.append(testX, x)
-            testY = np.append(testY, y)
-            result = test(x, y)
-            print("score :", result)
-            save_model(s)
+            if count == total - 1:
+                result = test(testX.reshape(-1, 2048), testY.reshape(-1, 2048))
+                print("score :", result)
+        # save_model(s)
     stop = timeit.default_timer()
     print ("Time used: %.2f s" % (stop - start))
