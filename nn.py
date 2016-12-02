@@ -23,8 +23,27 @@ optimization function (optimizer) > minimize cost (AdamOptimizer..SGD..AdaGrad)
 backpropagation
 
 feed forward + backprop = epoch
-'''
 
+Result around 50%
+
+skyu0221@guitar-vmware:~/guitar-transcriber$ python3 nn.py --save=True
+Total 44 songs found, will use 35 songs for training.
+Train rate: 79.5%
+
+Number of hidden layers: 3
+Number of nodes in hidden layer: 
+[100, 100, 100]
+Batch size:              200
+Number of epochs:        15
+
+Epoch 15 completed out of 15 (100.0%), loss: 29090.942720
+Estimate time remains: 0h 0m 0s
+Already spent:         0h 1m 6s
+
+Model successfully saved in './models/neural-network/' as 'nn-model'
+
+Accuracy: 59.6
+'''
 flags = tf.flags
 logging = tf.logging
 
@@ -262,7 +281,7 @@ if __name__ == "__main__":
 	layer_levels = 3
 	n_classes    = 51
 	layer_nodes  = [ 100 ] * layer_levels
-	batch_size   = 100
+	batch_size   = 200
 
 	print( "Number of hidden layers: %i\n" %layer_levels + \
 	       "Number of nodes in hidden layer: \n%s\n" %layer_nodes + \
