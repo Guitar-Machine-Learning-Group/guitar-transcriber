@@ -118,8 +118,8 @@ if __name__ == "__main__":
 	# print(len(np.vstack({tuple(row) for row in helper_test})))
 
 	# setup HMM state transition probability
-	trans_prob = np.ones((2**51,2**51))
+	trans_prob = np.ones((2,2))
 	# setup HMM emission probability
 	num_state  = len(np.vstack({tuple(row) for row in l}))
-	emi_prob = np.noes((len(f[0]),num_state))
+	emi_prob = np.ones((2,2))
 
