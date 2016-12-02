@@ -195,7 +195,7 @@ if __name__ == "__main__":
 
 			if not os.path.isfile( FLAGS.data_path + "labels/" + \
 				                   name.split('/')[-1] ):
-				raise LookupError( "Can not find labels for" + \
+				raise LookupError( "Can not find labels for " + \
 				                   name.split('/')[-1] )
 
 	random.shuffle( features )
