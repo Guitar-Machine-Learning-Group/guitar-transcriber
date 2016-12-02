@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import os
 import sys
+import random
 import numpy as np
 import tensorflow as tf
 
@@ -196,6 +197,8 @@ if __name__ == "__main__":
 				                   name.split('/')[-1] ):
 				raise LookupError( "Can not find labels for" + \
 				                   name.split('/')[-1] )
+
+	random.shuffle( features )
 
 	if FLAGS.self_test:
 		num_train = len( features )
