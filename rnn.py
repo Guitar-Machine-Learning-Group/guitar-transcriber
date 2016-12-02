@@ -239,7 +239,7 @@ if __name__ == "__main__":
 	if FLAGS.train:
 		input_nodes  = song_x.shape[1]
 		chunk_size   = song_x.shape[1]
-		hm_epochs    = 10
+		hm_epochs    = 15
 
 	else:
 		input_nodes  = song_test_x.shape[1]
@@ -247,7 +247,7 @@ if __name__ == "__main__":
 		hm_epochs    = 0
 
 	n_classes   = 51
-	rnn_size    = 128
+	rnn_size    = 512
 	batch_size  = 128
 	n_chunks    = 1
 
