@@ -266,7 +266,7 @@ if __name__ == "__main__":
 
 	n_classes   = 51
 	rnn_size    = 64
-	batch_size  = 64
+	batch_size  = 256
 	n_chunks    = 1
 
 	print( "RNN size:         %i\n" %rnn_size + \

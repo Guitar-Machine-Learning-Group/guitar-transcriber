@@ -272,8 +272,17 @@ if __name__ == "__main__":
 			song_test_y = np.vstack( ( song_test_y, \
 				                       np.load( FLAGS.data_path + "labels/" + \
 				                     features[i].split( split_symbol )[-1] ) ) )
+
+	if song_test_x.shape[0] % 2048 != 0:
+		song_test_x = np.vstack( ( song_test_x, \
+                                           song_test_x[:2048 - song_test_x.shape[0] % 2048] ) )
+		song_test_y = np.vstack( ( song_test_y, \
+                                           song_test_y[:2048 - song_test_x.shape[0] % 2048] ) )
+
 	# Train first 3 songs, test first 3 songs
 	# 3 hl, 100 nd, 100 batch, 100 epoch
+
+	song_test_x = song_test_x.reshape( [ -1, 2048 * 2048 ] )
 
 	if FLAGS.train:
 		input_nodes  = song_x.shape[1]
