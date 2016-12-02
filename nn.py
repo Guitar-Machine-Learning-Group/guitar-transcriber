@@ -189,11 +189,11 @@ if __name__ == "__main__":
 	if not len( features ):
 		raise LookupError( "Can not find any feature data to process" )
 
-        if os.name == 'nt':
-            split_symbol = '\'
+	if os.name == 'nt':
+		split_symbol = '\\'
 
-        else:
-            split_symbol = '/'
+	else:
+		split_symbol = "/"
 
 	if FLAGS.labels:
 
