@@ -48,6 +48,35 @@ def findStateIndex(state,stateArray):
 			return i
 	return None
 
+def viterbi(O, phi, A, B):
+
+	T = len(O) # size of observation sequence
+	m = np.size(B,0)  # number of possible observed values
+	k = np.size(A,0)  # number of possible states
+	qstar = np.zeros((1,T))
+
+	delta = np.zeros((T,k))
+	chi = np.zeros((T,k))
+
+	# initialization
+	delta[1,:] = B[O[0],:] * phi;
+
+	# induction
+	for i in range(2,T):
+		temp = (np.transpose(delta(i-1,:)) * np.ones(1,k)) .* A
+		[val, chi(i,:)] = max(temp,[],1)
+		delta(i,:) = val .* B(O(i),:)
+
+	# backtracking
+	qstar[T] = max(delta(T,:),[],2);
+
+	for i in range(1,(T-1))
+		qstar[T-i] = chi[T-i+1,qstar(T-i+1)];
+
+
+
+
+
 
 if __name__ == "__main__":
 
@@ -119,7 +148,6 @@ if __name__ == "__main__":
 
 	# setup HMM state transition probability
 	trans_prob = np.ones((2,2))
-	trans_amount = np.zeros((2,2))
 	# setup HMM emission probability
 	num_state  = len(np.vstack({tuple(row) for row in l}))
 	emi_prob = np.ones((2,2))
@@ -127,9 +155,18 @@ if __name__ == "__main__":
 	# get the statistical data
 	# simple hmm only see the first feature and the first pitch
 	for s_i in range(len(s_X)):
-		trans_prob[int(s_X[s_i][0]),int(l[s_i][0])] += 1
+		emi_prob[int(s_X[s_i][0]),int(l[s_i][0])] += 1
+		if s_i>0:
+			trans_prob[int(l[s_i-1][0]),int(l[s_i][0])] += 1
 
-	trans_prob = trans_prob/(len(s_X) + 4)
-	print(len(s_X))
-	print(trans_prob)
+	emi_prob = emi_prob/(np.sum(emi_prob,axis=0))
+	trans_prob = trans_prob/(np.sum(trans_prob,axis=1))
+	# print(len(s_X))
+	# print(emi_prob)
+	# print(trans_prob)
+
+	p_0 = np.ones((1,2))
+	p_0 = p_0/np.sum(p_0)
+	# print(p_0)
+
 
