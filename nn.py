@@ -205,8 +205,9 @@ def train_neural_network( x ):
 		b[ b > 0  ] = 1
 		b[ b <= 0 ] = 0
 
-		precision = a.sum() / 
-		print( 100 - ( abs( a - b ).sum() ) * 100 / ( a.sum() + b.sum() ) )
+		fn_fp = abs( a - b ).sum()
+		tp    = ( a + b - 1 ).sum()
+		print( 2 * tp / ( 2 * tp + fn_fp ) )
 
 		#np.savetxt( "check.txt", a, fmt='%i'  )
 		#np.savetxt( "y.txt", b, fmt='%i' )
