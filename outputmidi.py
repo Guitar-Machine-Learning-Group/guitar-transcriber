@@ -1,5 +1,6 @@
 from __future__ import division
 import os
+import numpy as np
 from pretty_midi import PrettyMIDI, Instrument
 import fmeasure
 from midiio import MidiIO 
@@ -7,7 +8,7 @@ from midiio import MidiIO
 from scoreevent import Note
 
 #Creates a midi file given a valid binary file and file path
-def binary_to_midi(Y,output_path):
+def binary_to_midi(Y,output_path,numpy=False):
     # Y needs to by a n by 51 matrix
     # output_path isa string that needs to end with a filename.mid
     # ex Y = [[0,0,...0],[0,0,...1].....], output_path='test.mid'
@@ -16,6 +17,8 @@ def binary_to_midi(Y,output_path):
     prev_i = Y[1]
     t =0
     note_times = [[] for i in range(51)]
+    if numpy:
+        Y = Y.tolist()
     for i in Y:
         
         for j in range(1,51):
