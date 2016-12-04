@@ -8,7 +8,8 @@ from sklearn import metrics
 import pickle
 from sklearn.externals import joblib
 
-clf = OneVsRestClassifier(SVC(kernel='poly'))
+clf = OneVsRestClassifier(SVC(kernel='poly', degree=3))
+f = None
 try:
     s = joblib.load('svm.pkl')
 except:
@@ -17,7 +18,7 @@ except:
 
 parameters = {
     "estimator__C": [1,2,4,8],
-    "estimator__kernel": ["poly","rbf"],
+    "estimator__kernel": ["poly","rbf","sigmoid"],
     "estimator__degree":[1, 2, 3, 4],
 }
 
@@ -30,7 +31,11 @@ def train(x, y):
 def test(x, y):
     global s
     c = s
-    score = c.score(x, y)
+    # score = c.score(x, y)
+    y_pred = c.predict(x)
+    print(y_pred.shape)
+    np.save(f+"_pred_midi", y_pred)
+    score = metrics.f1_score(y, y_pred, average='micro')
     return score
 
 def save_model(clf):
@@ -44,14 +49,15 @@ def load_model():
 if __name__ == "__main__":
     start = timeit.default_timer()
     # pre-load data
-    featureFileList = glob.glob('./preprocess1/features/*', recursive=True)
-    labelFileList = glob.glob('./preprocess1/labels/*', recursive=True)
+    featureFileList = glob.glob('./preprocess/features/*', recursive=True)
+    labelFileList = glob.glob('./preprocess/labels/*', recursive=True)
     if len(featureFileList) != len(labelFileList):
         print("Data is not matched")
         exit(-1)
-    total = len(labelFileList)
+    # total = len(labelFileList)
+    total = 4
     # trainSize = int(total * 0.8)
-    trainSize = 2
+    trainSize = 3
     testX = np.array([])
     testY = np.array([])
     trainX = np.array([])
@@ -66,11 +72,12 @@ if __name__ == "__main__":
                 labelFileName = labelFileList.pop(i)
                 break
         x = np.load(featureFileName)
-        y = np.load(labelFileName)
+        y = np.load(labelFileName).astype(int)
         if count < trainSize:
             # train(x, y)
             # print(x.shape)
             # print(y.shape)
+            f = labelFileName.split('/')[-1].split('.')[0]
             trainX = np.append(trainX, x)
             trainY = np.append(trainY, y)
         elif count < total:
