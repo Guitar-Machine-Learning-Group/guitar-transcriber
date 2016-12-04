@@ -206,7 +206,7 @@ def train_neural_network( x ):
 		b[ b <= 0 ] = 0
 
 		fn_fp = abs( a - b ).sum()
-		tp    = ( a + b - 1 ).sum()
+		tp    = a[ b == 1 ].sum()
 		print( 2 * tp / ( 2 * tp + fn_fp ) )
 
 		#np.savetxt( "check.txt", a, fmt='%i'  )
