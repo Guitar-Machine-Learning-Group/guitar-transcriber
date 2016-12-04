@@ -178,8 +178,9 @@ def train_recurrent_neural_network( x ):
 		correct  = tf.equal( tf.argmax( prediction, 1 ), tf.argmax( y, 1 ) )
 		accuracy = tf.reduce_mean( tf.cast( correct, 'float' ) )
 		
-		a, b = sess.run([prediction, y], feed_dict = { x: song_test_x, \
-			   	                   y: song_test_y } )
+		a, b = sess.run([prediction, y], feed_dict = \
+				{ x: song_test_x.reshape( ( -1, n_chunks, chunk_size ) ), \
+		                  y: song_test_y } )
 
 		threshold = 0
 
