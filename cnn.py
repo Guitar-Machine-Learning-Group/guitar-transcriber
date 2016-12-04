@@ -12,7 +12,7 @@ from glob import glob
 from time import time
 from math import floor
 from scoreevent import Chord, Note
-from tensorflow.python.ops import rnn, rnn_cell
+
 '''
 input > weight > hidden layer 1 (activation function) > weights >
 hidden layer 2 (activation function) > weights > output layer
@@ -23,40 +23,41 @@ optimization function (optimizer) > minimize cost (AdamOptimizer..SGD..AdaGrad)
 backpropagation
 
 feed forward + backprop = epoch
-'''
-'''
-skyu0221@guitar-3:~/guitar-transcriber$ python3 rnn.py --save=True
+
+Result around 50%
+
+skyu0221@guitar-vmware:~/guitar-transcriber$ python3 nn.py --save=True
 Total 44 songs found, will use 35 songs for training.
 Train rate: 79.5%
 
-RNN size:         64
-Chunk size:       2048
-Number of chunks: 1
-Batch size:       64
-Number of epochs: 15
+Number of hidden layers: 3
+Number of nodes in hidden layer: 
+[100, 100, 100]
+Batch size:              200
+Number of epochs:        15
 
-Epoch 15 completed out of 15 (100.0%), loss: 54.568140
+Epoch 15 completed out of 15 (100.0%), loss: 29090.942720
 Estimate time remains: 0h 0m 0s
-Already spent:         0h 4m 50s
+Already spent:         0h 1m 6s
 
-Model successfully saved in './models/recurrent-neural-network/' as 'rnn-model'
+Model successfully saved in './models/neural-network/' as 'nn-model'
 
-Accuracy: 59.7
+Accuracy: 59.6
 '''
 flags = tf.flags
 logging = tf.logging
 
 flags.DEFINE_string( "data_path",  "./preprocess/", \
                      "Where the training/test data is stored." )
-flags.DEFINE_string( "save_path",  "./models/recurrent-neural-network/", \
+flags.DEFINE_string( "save_path",  "./models/convolutional-neural-network/", \
                      "Model output directory." )
-flags.DEFINE_string( "save_name",  "rnn-model", \
+flags.DEFINE_string( "save_name",  "nn-model", \
                      "Model output name.")
 flags.DEFINE_bool(   "save",       False, \
                      "save result model." )
-flags.DEFINE_string( "load_path",  "./models/recurrent-neural-network/", \
+flags.DEFINE_string( "load_path",  "./models/convolutional-neural-network/", \
                      "Model load directory." )
-flags.DEFINE_string( "load_name",  "rnn-model", \
+flags.DEFINE_string( "load_name",  "nn-model", \
                      "Model load name.")
 flags.DEFINE_bool(   "load",       False, \
                      "Load exist model." )
@@ -71,28 +72,51 @@ flags.DEFINE_bool(   "train",      True, \
 
 FLAGS = flags.FLAGS
 
-def recurrent_neural_network_model( x ):
+def conv2d( x, w ):
 
-	layer = { 'weights': tf.Variable( tf.random_normal( \
-		                              [ rnn_size, n_classes ] ) ),
-              'biases':  tf.Variable( tf.random_normal( \
-              	                      [ n_classes ] ) ) }
+	return tf.nn.conv2d( x, w, strides =[ 1, 1, 1, 1 ], padding = 'SAME' )
 
-	x = tf.transpose( x, [ 1, 0, 2 ] )
-	x = tf.reshape( x, [ -1, chunk_size ] )
-	x = tf.split( 0, n_chunks, x )
+def maxpool2d( x ):
 
-	lstm_cell       = rnn_cell.BasicLSTMCell( rnn_size, state_is_tuple = True )
-	outputs, states = rnn.rnn( lstm_cell, x, dtype = tf.float32 )
+	return tf.nn.max_pool( x, ksize = [ 1, 8, 8, 1 ], \
+		                    strides = [ 1, 8, 8, 1 ], padding = 'SAME' )
 
-	output          = tf.matmul( outputs[-1], \
-    	                         layer['weights'] ) + layer['biases']
+def convolutional_neural_network_model( x ):
+
+	weights = { \
+	    'w_conv1': tf.Variable( tf.random_normal( [ 5, 5, 1, 32 ] ) ), \
+	    'w_conv2': tf.Variable( tf.random_normal( [ 5, 5, 32, 64 ] ) ), \
+	    'w_fc':    tf.Variable( tf.random_normal( [ 32*32*64, 1024 ] ) ), \
+	    'out':     tf.Variable( tf.random_normal( [ 1024, n_classes ] ) ) }
+
+	biases  = { \
+	    'b_conv1': tf.Variable( tf.random_normal( [ 32 ] ) ), \
+	    'b_conv2': tf.Variable( tf.random_normal( [ 64 ] ) ), \
+	    'b_fc':    tf.Variable( tf.random_normal( [ 1024 ] ) ), \
+	    'out':     tf.Variable( tf.random_normal( [ n_classes ] ) ) }
+
+	x = tf.reshape( x, shape = [ -1, 2048, 2048, 1 ] )
+
+	conv1 = tf.nn.relu( conv2d( x, weights[ 'w_conv1' ] ) + \
+		                biases[ 'b_conv1' ] )
+	conv1 = maxpool2d( conv1 )
+
+	conv2 = tf.nn.relu( conv2d( conv1, weights[ 'w_conv2' ] ) + \
+		                biases[ 'b_conv2'] )
+	conv2 = maxpool2d( conv2 )
+
+	fc     = tf.reshape( conv2, [ -1, 32*32*64 ] )
+	fc     = tf.nn.relu( tf.matmul( fc, weights[ 'w_fc' ] ) + \
+		                 biases[ 'b_fc' ] )
+	fc     = tf.nn.dropout( fc, keep_rate )
+
+	output = tf.matmul( fc, weights[ 'out' ] ) + biases[ 'out' ]
 
 	return output
 
-def train_recurrent_neural_network( x ):
+def train_convolutional_neural_network( x ):
 
-	prediction = recurrent_neural_network_model( x )
+	prediction = convolutional_neural_network_model( x )
 	cost       = tf.reduce_mean( \
 	                 tf.nn.sigmoid_cross_entropy_with_logits( prediction, y ) )
 	optimizer  = tf.train.AdamOptimizer().minimize( cost )
@@ -106,11 +130,11 @@ def train_recurrent_neural_network( x ):
 
 		if FLAGS.load:
 			new_saver = tf.train.get_checkpoint_state( FLAGS.load_path )
-
 			if new_saver and new_saver.model_checkpoint_path:
 				saver.restore( sess, new_saver.model_checkpoint_path )
 				print( "Model successfully load from '" + FLAGS.load_path + \
 					   "'" + " file '" + FLAGS.load_name + "'\n" )
+
 			else:
 				print( "Model cannot find. No model loaded." )
 
@@ -129,19 +153,15 @@ def train_recurrent_neural_network( x ):
 
 			while idx < song_x.shape[0]:
 
-				start       = idx
-				end         = idx + batch_size
-
-				batch_x     = np.array( song_x[start:end] )
+				start = idx
+				end   = idx + batch_size
 
 				if end > song_x.shape[0]:
+					start = song_x.shape[0] - batch_size
+					end   = song_x.shape[0]
 
-					batch_x = batch_x.reshape( \
-					                  ( song_x.shape[0] - start, \
-					                    n_chunks, chunk_size ) )
-				else:
-					batch_x     = batch_x.reshape( \
-						                  ( batch_size, n_chunks, chunk_size ) )
+				batch_x     = np.transpose( np.array( song_x[start:end] ) )
+				batch_x     = batch_x.reshape( [ 1, -1 ] )
 				batch_y     = np.array( song_y[start:end] )
 
 				_, c        = sess.run( [ optimizer, cost ], \
@@ -154,6 +174,7 @@ def train_recurrent_neural_network( x ):
 
 			spent += timer_end - timer_sta
 			timer  = spent * ( hm_epochs - epoch - 1 ) / ( epoch + 1 )
+			
 
 			print( "\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K" + \
 				   "Epoch %i completed out of %i (%.1f%%), loss: %f\n" \
@@ -177,26 +198,10 @@ def train_recurrent_neural_network( x ):
 
 		correct  = tf.equal( tf.argmax( prediction, 1 ), tf.argmax( y, 1 ) )
 		accuracy = tf.reduce_mean( tf.cast( correct, 'float' ) )
-		
-		a, b = sess.run([prediction, y], feed_dict = \
-				{ x: song_test_x.reshape( ( -1, n_chunks, chunk_size ) ), \
-		                  y: song_test_y } )
 
-		threshold = 0
-
-		a[ a < threshold ] = 0
-		a[ a > threshold ] = 1
-
-		b[ b > 0  ] = 1
-		b[ b <= 0 ] = 0
-
-		fn_fp = abs( a - b ).sum()
-		tp    = a[ b == 1 ].sum()
-		print( 2 * tp / ( 2 * tp + fn_fp ) )
-
-		print( "Accuracy: %.1f" %( 100 * accuracy.eval( \
-			{ x: song_test_x.reshape( ( -1, n_chunks, chunk_size ) ), \
-		      y: song_test_y } ) ) )
+		print( "Accuracy: %.1f\n" \
+			   %( accuracy.eval( { x: song_test_x, \
+			   	                   y: song_test_y } ) * 100 ) )
 		
 if __name__ == "__main__":
 
@@ -212,7 +217,7 @@ if __name__ == "__main__":
 		split_symbol = '\\'
 
 	else:
-		split_symbol = '/'
+		split_symbol = "/"
 
 	if FLAGS.labels:
 
@@ -251,7 +256,7 @@ if __name__ == "__main__":
 
 		song_x = np.vstack( ( song_x, np.load( features[i] ) ) )
 		song_y = np.vstack( ( song_y, np.load( FLAGS.data_path + "labels/" + \
-                                                       features[i].split( split_symbol )[-1] ) ) )
+			                         features[i].split( split_symbol )[-1] ) ) )
 
 	if FLAGS.self_test:
 		num_train = 0
@@ -266,32 +271,38 @@ if __name__ == "__main__":
 			song_test_x = np.vstack( ( song_test_x, np.load( features[i] ) ) )
 			song_test_y = np.vstack( ( song_test_y, \
 				                       np.load( FLAGS.data_path + "labels/" + \
-				                       features[i].split( split_symbol )[-1] ) ) )
+				                     features[i].split( split_symbol )[-1] ) ) )
+
+	if song_test_x.shape[0] % 2048 != 0:
+		song_test_x = np.vstack( ( song_test_x, \
+                                           song_test_x[:2048 - song_test_x.shape[0] % 2048] ) )
+		song_test_y = np.vstack( ( song_test_y, \
+                                           song_test_y[:2048 - song_test_x.shape[0] % 2048] ) )
+
 	# Train first 3 songs, test first 3 songs
 	# 3 hl, 100 nd, 100 batch, 100 epoch
 
+	song_test_x = song_test_x.reshape( [ -1, 2048 * 2048 ] )
+
 	if FLAGS.train:
 		input_nodes  = song_x.shape[1]
-		chunk_size   = song_x.shape[1]
 		hm_epochs    = 15
 
 	else:
 		input_nodes  = song_test_x.shape[1]
-		chunk_size   = song_test_x.shape[1]
 		hm_epochs    = 0
 
-	n_classes   = 51
-	rnn_size    = 64
-	batch_size  = 256
-	n_chunks    = 1
+	n_classes    = 51
+	batch_size   = 2048
+	keep_rate    = 0.8
+	layer_levels = 2
 
-	print( "RNN size:         %i\n" %rnn_size + \
-	       "Chunk size:       %i\n" %chunk_size + \
-	       "Number of chunks: %i\n" %n_chunks + \
-	       "Batch size:       %i\n" %batch_size + \
-	       "Number of epochs: %i\n" %hm_epochs )
+	print( "Number of hidden layers: %i\n" %layer_levels + \
+	       "Batch size:              %i\n" %batch_size + \
+	       "Number of epochs:        %i\n" %hm_epochs )
 
-	x = tf.placeholder( 'float', [ None, n_chunks, chunk_size ] )
-	y = tf.placeholder( 'float' )
+	x         = tf.placeholder( 'float', [ None, input_nodes * batch_size ] )
+	y         = tf.placeholder( 'float' )
+	keep_prob = tf.placeholder( tf.float32 )
 
-	train_recurrent_neural_network( x )
+	train_convolutional_neural_network( x )

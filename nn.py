@@ -194,6 +194,25 @@ def train_neural_network( x ):
 		correct  = tf.equal( tf.argmax( prediction, 1 ), tf.argmax( y, 1 ) )
 		accuracy = tf.reduce_mean( tf.cast( correct, 'float' ) )
 
+		a, b = sess.run([prediction, y], feed_dict = { x: song_test_x, \
+			   	                   y: song_test_y } )
+
+		threshold = 0
+
+		a[ a < threshold ] = 0
+		a[ a > threshold ] = 1
+
+		b[ b > 0  ] = 1
+		b[ b <= 0 ] = 0
+
+		fn_fp = abs( a - b ).sum()
+		tp    = a[ b == 1 ].sum()
+		print( 2 * tp / ( 2 * tp + fn_fp ) )
+
+		#np.savetxt( "check.txt", a, fmt='%i'  )
+		#np.savetxt( "y.txt", b, fmt='%i' )
+
+
 		print( "Accuracy: %.1f\n" \
 			   %( accuracy.eval( { x: song_test_x, \
 			   	                   y: song_test_y } ) * 100 ) )
