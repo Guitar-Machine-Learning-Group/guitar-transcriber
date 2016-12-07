@@ -4,6 +4,7 @@ from pretty_midi import PrettyMIDI, Instrument
 import fmeasure
 from midiio import MidiIO 
 import numpy as np
+from optimize import optimizer
 
 from scoreevent import Note
 
@@ -17,7 +18,7 @@ def binary_to_midi(Y,output_path):
     prev_i = [0 for i in range(51)] #nothing is before the song
     t =0
     songlength = len(Y)
-    
+    Y = optimizer( Y, 2 )
     note_times = [[] for i in range(51)]
     for i in Y:
         for j in range(0,51):
@@ -36,18 +37,19 @@ def binary_to_midi(Y,output_path):
         t+=128/songlength
     for i in range(0,51):
         for j in note_times[i]:
-            onset=j[0]
+            onset=float(j[0])
             offset=j[1]
             octave = int(i/12)+1
             p = i%12
             pname = Note.pitch_classes[p]
+            if onset == 0 and offset != 0:
+                onset += 0.1
             note = Note(
                         pname, octave,
                         onset_ts=(onset),
                         offset_ts=(offset),
                     )
             Notes.append(note)
-    
     midio.write_midi(Notes,24)
     return Notes
 
@@ -90,14 +92,21 @@ if __name__ == '__main__':
 ##    Y = midi_to_binary(Y)
 ##    Y.append([0]*51)
 ##    print(fmeasure.fmeasure(y,Y)) #about 89% accurate since the midi-to-bin isn't perfect and doesn't need to be used at all.
-##    
-    fname = "3doorsdown_herewithoutyou_pred_midi.npy"
-    oname = os.getcwd()+"\\3doorsdown_herewithoutyou_pred_midi.mid" 
+##
+    fname = "3doorsdown_herewithoutyou.npy"
+    oname = os.getcwd()+"\\3doorsdown_herewithoutyou.mid" 
+    Y = np.load(fname)
+    binary_to_midi(Y,oname)    
+    print(fname + " comeplete")
+    fname = "3doorsdown_herewithoutyou_rnn_80_pred.npy"
+    oname = os.getcwd()+"\\3doorsdown_80.mid"
     Y = np.load(fname)
     binary_to_midi(Y,oname)
     print(fname + " comeplete")
+    '''
     fname = "3doorsdown_herewithoutyou_rnn_80_pred.npy"
     oname = os.getcwd()+"\\3doorsdown_herewithoutyou_rnn_80_pred.mid" 
     Y = np.load(fname)
     binary_to_midi(Y,oname)    
     print(fname + " comeplete")
+    '''
