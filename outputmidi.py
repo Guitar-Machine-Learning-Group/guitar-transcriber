@@ -38,7 +38,7 @@ def binary_to_midi(Y,output_path):
         for j in note_times[i]:
             onset=j[0]
             offset=j[1]
-            octave = int(i/12)+1
+            octave = int(i/12)+4 # increase by 3 octaves + base of 1
             p = i%12
             pname = Note.pitch_classes[p]
             note = Note(
