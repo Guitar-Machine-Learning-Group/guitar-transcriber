@@ -34,8 +34,8 @@ def test(x, y):
     # score = c.score(x, y)
     y_pred = c.predict(x)
     print(y_pred.shape)
-    np.save(f+"_pred_midi", y_pred)
-    score = metrics.f1_score(y, y_pred, average='micro')
+    np.save(f+"_pred_SVM_midi_2", y_pred)
+    score = metrics.f1_score(y, y_pred, average='samples')
     return score
 
 def save_model(clf):
@@ -62,8 +62,14 @@ if __name__ == "__main__":
     testY = np.array([])
     trainX = np.array([])
     trainY = np.array([])
+    featureFileList2 = glob.glob('./preprocess2/features/*', recursive=True)
+    labelFileList2 = glob.glob('./preprocess2/labels/*', recursive=True)
+
 
     for count in range(total):
+        if count == total-1:
+            featureFileList = featureFileList2
+            labelFileList = labelFileList2
         selector = np.random.randint(0, len(featureFileList))
         featureFileName = featureFileList.pop(selector)
 
@@ -77,14 +83,15 @@ if __name__ == "__main__":
             # train(x, y)
             # print(x.shape)
             # print(y.shape)
-            f = labelFileName.split('/')[-1].split('.')[0]
             trainX = np.append(trainX, x)
             trainY = np.append(trainY, y)
         elif count < total:
+            f = labelFileName.split('/')[-1].split('.')[0]
             if count == trainSize:
                 train(trainX.reshape(-1,2048), trainY.reshape(-1, 51))
             testX = np.append(testX, x)
             testY = np.append(testY, y)
+            print("test: " + f)
             if count == total - 1:
                 result = test(testX.reshape(-1, 2048), testY.reshape(-1, 51))
                 print("score :", result)
