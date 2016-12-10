@@ -192,7 +192,7 @@ def train_recurrent_neural_network( x ):
 
 		fn_fp = abs( a - b ).sum()
 		tp    = a[ b == 1 ].sum()
-		print( 2 * tp / ( 2 * tp + fn_fp ) )
+		print( "F1 Score: %.1f" %( 200 * tp / ( 2 * tp + fn_fp ) ) )
 
 		print( "Accuracy: %.1f" %( 100 * accuracy.eval( \
 			{ x: song_test_x.reshape( ( -1, n_chunks, chunk_size ) ), \
