@@ -5,6 +5,7 @@ import fmeasure
 from midiio import MidiIO 
 import numpy as np
 from optimize import optimizer
+#from fextract import FeatureExtractor
 
 from scoreevent import Note
 
@@ -39,7 +40,7 @@ def binary_to_midi(Y,output_path):
         for j in note_times[i]:
             onset=float(j[0])
             offset=j[1]
-            octave = int(i/12)+1
+            octave = int(i/12)+2
             p = i%12
             pname = Note.pitch_classes[p]
             if onset == 0 and offset != 0:
@@ -94,12 +95,12 @@ if __name__ == '__main__':
 ##    print(fmeasure.fmeasure(y,Y)) #about 89% accurate since the midi-to-bin isn't perfect and doesn't need to be used at all.
 ##
     fname = "3doorsdown_herewithoutyou.npy"
-    oname = os.getcwd()+"\\3doorsdown_herewithoutyou.mid" 
+    oname = os.getcwd()+"\\3doorsdown_herewithoutyou_36.mid" 
     Y = np.load(fname)
     binary_to_midi(Y,oname)    
     print(fname + " comeplete")
     fname = "3doorsdown_herewithoutyou_rnn_80_pred.npy"
-    oname = os.getcwd()+"\\3doorsdown_80.mid"
+    oname = os.getcwd()+"\\3doorsdown_80_36.mid"
     Y = np.load(fname)
     binary_to_midi(Y,oname)
     print(fname + " comeplete")
